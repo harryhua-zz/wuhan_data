@@ -4,6 +4,12 @@ from utils import *
 # import configuration file and figure out what to run
 from config import *
 
+def test_only_0a(df,par):
+# testing multiple datasets I/O and .csv I/O
+    print(df[0])
+    print(df[1])
+    return df
+
 def read_train_data_1a(df, par):
     return readZipCSV(par['dir'], par['fname'])
 
@@ -37,6 +43,7 @@ def analyze_2fy(df, par):
     return None
 
 def create_static_features_3a(df, par):
+# TODO: This function fails when par['condprob'][0] or par['condprob'][1] has only one variable in the list
     firstVarList = par['condprob'][0]
     secondVarList = par['condprob'][1]
 
@@ -51,7 +58,7 @@ def create_static_features_3a(df, par):
         for A in firstVarList:
             print("Generating cpt for {}".format(A))
             cpt = genCondProbTable(bought,[A],[])
-            print(cpt)
+            #print(cpt)
             static_features['p_'+A] = genCondProbVar(df,cpt)
     else:
         for A in firstVarList:
@@ -99,7 +106,8 @@ def get_train_purchase_data_1sandy(df, par):
 
 def main():
     # The following lines do not need tuning in most cases
-    steps = {'1a': read_train_data_1a,
+    steps = {'0a': test_only_0a,
+            '1a': read_train_data_1a,
             '1b': read_test_data_1b,
             '2a': summarize_data_2a,
             '2fy': analyze_2fy,
@@ -111,11 +119,31 @@ def main():
     datasets = {None: None}
 
     for id in exec_seq:
-        datasets[df_out[id]] = steps[id](datasets[df_in[id]], pars[id])
-
-    # for debugging only
-    datasets['train_3a'].to_csv('../data/train_3a.csv')
-    #datasets['train_2sandy'].to_csv('../data/train_2sandy.csv') #sandy
+        # read in dataframes from .csv files on disk as needed
+        if id in df_to_read:
+            if isinstance(df_to_read[id],list):
+                for dfName in df_to_read[id]:
+                    datasets[dfName] = pd.read_csv('data/'+dfName+'.csv')
+            else:
+                datasets[df_to_read[id]] = pd.read_csv('data/'+df_to_read[id]+'.csv')
+        # major loop that calls all the steps in execution sequence
+        if isinstance(df_out[id],list):
+            # if we need to output multiple datasets, then the 'steps' function must return a list of dataframe
+            inList = []
+            for dfName in df_in[id]:
+                inList.append(datasets[dfName])
+            retList = steps[id](inList, pars[id])
+            for dfName, df in zip(df_out[id],retList):
+                datasets[dfName] = df
+        else:
+            datasets[df_out[id]] = steps[id](datasets[df_in[id]], pars[id])
+        # write dataframes to .csv files on disk as needed
+        if id in df_to_write:
+            if isinstance(df_to_write[id],list):
+                for dfName in df_to_write[id]:
+                    datasets[dfName].to_csv('data/'+dfName+'.csv',index=False)
+            else:
+                datasets[df_to_write[id]].to_csv('data/'+df_to_write[id]+'.csv',index=False)
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,8 @@
-exec_seq = ['1a','3a']
+#exec_seq = ['1a','3a']
+exec_seq = ['0a']
 
-pars = {'1a': {'dir': "../data/", 'fname': "train.csv.zip"},
+pars = {'0a': None,
+        '1a': {'dir': "../data/", 'fname': "train.csv.zip"},
         '1b': {'dir': "../data/", 'fname': "test.csv.zip"},
         '2a': None,
         '2fy': {'log': "../log/step_2fy.log"},
@@ -9,7 +11,8 @@ pars = {'1a': {'dir': "../data/", 'fname': "train.csv.zip"},
         #'3a': {'condprob':(('A','B'),('day','state'))} # for debugging only
         }
 
-df_in = {'1a': None,
+df_in = {'0a': ['test_only_in1','test_only_in2'],
+        '1a': None,
         '1b': None,
         '2a': 'train',
         '2fy': 'train',
@@ -17,7 +20,8 @@ df_in = {'1a': None,
         '3a': 'train'
         }
 
-df_out = {'1a': 'train',
+df_out = {'0a': ['test_only_out1','test_only_out2'],
+        '1a': 'train',
         '1b': 'test',
         '2a': None,
         '2fy': None,
@@ -25,4 +29,13 @@ df_out = {'1a': 'train',
         '3a': 'train_3a'
         }
 
+# Names of datasets to be read from disk
+# Can be a string or a list of strings
+df_to_read = {'0a': ['test_only_in1','test_only_in2']
+                }
 
+# Names of datasets to be written to disk
+# Can be a string or a list of strings
+df_to_write = {'0a': ['test_only_out1','test_only_out2'],
+                '3a': 'train_3a'
+                }
