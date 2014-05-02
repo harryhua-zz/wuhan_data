@@ -73,3 +73,24 @@ def genCondProbVar(df,cpt):
         print("ERROR: Empty conditional probability hash table.")
         return None
 
+def discretize(v,nbins,method="linspace"):
+    """
+    Transform a continuous variable into a discrete one.
+    v is the continuous variable, which can be in the form of a list/numpy ndarray/pandas series.
+    nbins is the number of bins v is cut into.
+    method can be one of linspace/qcut. Method linspace inserts (nbins-1) cutoff points linearly
+    between min and max of v. Method qcut cuts v at its nbins-quantiles.
+    Example:
+        df["newDiscreteCol"] = discretize(df["oldContinuousCol"],10,"qcut")
+    """
+    if method == "linspace":
+        bins = np.linspace(min(v),max(v),nbins)
+        return np.digitize(v,bins)
+    elif method == "qcut":
+        return pd.qcut(v,nbins).labels
+    else:
+        print("ERROR: Unrecognized method for discretization.")
+        print("discretize(v,nbins,method):")
+        print(discretize.__doc__)
+        return None
+
