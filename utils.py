@@ -94,3 +94,34 @@ def discretize(v,nbins,method="linspace"):
         print(discretize.__doc__)
         return None
 
+def filterUnmatchedRecord(df):
+	"""
+	author: taku
+	Filter out the records that have unmatched customer characteristics (except for "time"
+	and "day") compared to the last record for each customer.
+	"""	
+	df_benchmark = df.groupby(['customer_ID']).last()
+
+	record_num = len(df)
+	customer_index = 0
+	remove_list = []
+	for i in range(record_num):
+		if df.iloc[i, 0] != df_benchmark.iloc[customer_index, 0]:
+			customer_index += 1
+		
+		if df.iloc[i, 2] == 1: # if record_type=1 then skip
+			continue
+		
+		isMatch = True
+		for column in range(5, 17): #all customer characteristics except for "day" and "time"
+			if df.iloc[i, column] != df_benchmark.iloc[customer_index, column]:
+				if pd.isnull(df.iloc[i, column]) and pd.isnull(df_benchmark.iloc[customer_index, column]):
+					continue
+				isMatch = False
+				break
+				
+		if isMatch == False:
+			remove_list.append(i)
+				
+	df_filtered = df.drop(df.index[remove_list])
+	return df_filtered

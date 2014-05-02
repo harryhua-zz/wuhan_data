@@ -102,7 +102,13 @@ def get_train_purchase_data_1sandy(df, par):
     #print df_purchase
     return df_purchase
 """
-
+#taku: feature selection
+def feature_selection_4a(df, par):
+	df_data = df.iloc[:,0:len(df.columns) - 1]
+	df_y = df.iloc[:,len(df.columns) - 1]
+	df_data_new = LinearSVC(C=par['C'], penalty=par['penalty'], dual=par['dual']).fit_transform(df_data, df_y)
+	df_new = pd.concat([df_data_new, df_y], axis=1)
+	return df_new
 
 def main():
     # The following lines do not need tuning in most cases
@@ -112,7 +118,8 @@ def main():
             '2a': summarize_data_2a,
             '2fy': analyze_2fy,
             '2sandy': preprocess_data_2sandy,
-            '3a': create_static_features_3a
+            '3a': create_static_features_3a,
+            '4a': feature_selection_4a
             #'1sandy': get_train_purchase_data_1sandy
             }
 
