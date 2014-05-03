@@ -33,7 +33,34 @@ def summarize_data_2a(df, par):
     print("================================================================================================================")
     return None
 
+def recode_features_2b(df, par):
+    """
+    Recode some continuous original features and append to the same data set
+    df[0] is the dataset to be recoded (train/test).
+    df[1] is the dataset that provides help (train).
+    notice that this function is project specific -- Allstate only
+    """
+    recoded_features = df[0]
+    helper_features = df[1]
+
+    recoded_features['hour'] = recoded_features['time'].apply(lambda x: int(x.split(':')[0]))
+    recoded_features['r_hour'] = pd.cut(recoded_features['hour'],[-1,6,12,18,24]).labels
+    recoded_features['r_car_age'] = pd.cut(recoded_features['car_age'],[-1,3,7,12,100]).labels
+    recoded_features['r_age_oldest'] = pd.cut(recoded_features['age_oldest'],[-1,28,44,60,100]).labels
+    recoded_features['r_age_youngest'] = pd.cut(recoded_features['age_youngest'],[-1,26,40,57,100]).labels
+    recoded_features['r_cost'] = pd.cut(recoded_features['cost'],[-1,605,635,665,1000]).labels
+    bought = helper_features.loc[helper_features['record_type']==1,:]
+    bought_count = bought.groupby('location')['location'].count()
+    rhash = bought_count.apply(lambda x: int(x>10)+int(x>15)+int(x>25))
+    recoded_features['r_location'] = recoded_features['location'].apply(lambda row: rhash.get(row))
+
+    return [recoded_features]
+
+
 def analyze_2fy(df, par):
+    """
+    notice that this function is project specific -- Allstate only
+    """
     if par.get('log') != None:
         log = open(par['log'], 'w')
     else:
@@ -49,6 +76,16 @@ def analyze_2fy(df, par):
 
 def create_static_features_3a(df, par):
 # TODO: This function fails when par['condprob'][0] or par['condprob'][1] has only one variable in the list
+    """
+    Create static features based on original/recoded features and return a new data set
+    df[0] is the dataset to create features on (train/test).
+    df[1] is the dataset that provides help (train).
+    notice that this function is project specific -- Allstate only
+    """
+
+    input_features = df[0]
+    helper_features = df[1]
+
     firstVarList = par['condprob'][0]
     secondVarList = par['condprob'][1]
 
@@ -56,24 +93,22 @@ def create_static_features_3a(df, par):
         print("ERROR: failed to create static features based on an empty list.")
         return None
 
-    bought = df.loc[df['record_type']==1,:]
+    bought = helper_features.loc[helper_features['record_type']==1,:]
     static_features = {}
 
     if not secondVarList:
         for A in firstVarList:
             print("Generating cpt for {}".format(A))
             cpt = genCondProbTable(bought,[A],[])
-            #print(cpt)
-            static_features['p_'+A] = genCondProbVar(df,cpt)
+            static_features['p_'+A] = genCondProbVar(input_features,cpt)
     else:
         for A in firstVarList:
             for B in secondVarList:
+                print("Generating cpt for {} | {}".format(A,B))
                 cpt = genCondProbTable(bought,[A],[B])
-                static_features['p_'+A+'_'+B] = genCondProbVar(df,cpt)
+                static_features['p_'+A+'_'+B] = genCondProbVar(input_features,cpt)
 
-    return pd.DataFrame(static_features)
-
-#def create_dynamic_features_3b(df, par):
+    return [pd.DataFrame(static_features)]
 
 #sandy: data preprocessing
 def preprocess_data_2sandy(df, par):
@@ -185,6 +220,7 @@ def main():
             '1a': read_train_data_1a,
             '1b': read_test_data_1b,
             '2a': summarize_data_2a,
+            '2b': recode_features_2b,
             '2fy': analyze_2fy,
             '2sandy': preprocess_data_2sandy,
             '3a': create_static_features_3a,

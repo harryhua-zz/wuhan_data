@@ -66,7 +66,7 @@ def genCondProbVar(df,cpt):
     """
     cols = cpt.index.names
     if len(cols) == 1:
-        return df.loc[:,cols].apply(lambda row: cpt.get(row.values), axis=1)
+        return df.loc[:,cols].apply(lambda row: cpt.get(row.values))
     elif len(cols) >= 2:
         return df.loc[:,cols].apply(lambda row: cpt.get(tuple(row.values)), axis=1)
     else:
