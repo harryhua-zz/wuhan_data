@@ -159,9 +159,23 @@ def train_sh(df, par):
     clf = svm.SVC()
     clf.fit(train_feature, train_label)
     
-    result = clf.predict(test_feature)
+    num_test_cases = len(test_label)
+    if num_test_cases > 0:
+        result = clf.predict(test_feature)
+        
+        print(result, test_label)
+        assert len(result) == len(test_label)
+        
+        num_test_cases = len(test_label)
+        num_err = 0
+        for n in range(num_test_cases):
+            if test_label[n] is not result[n]:
+                num_err += 1
     
-    print(result, test_label)
+        print(num_err)
+        print(1.0 * num_err / num_test_cases)
+    else:
+        print('empty test set')
     
     return clf
 
