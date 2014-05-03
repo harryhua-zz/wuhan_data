@@ -4,10 +4,7 @@ from utils import *
 # import configuration file and figure out what to run
 from config import *
 import random
-import numpy as np
-import pandas as pd
-from random import sample
-from sklearn import svm
+
 
 def test_only_0a(df,par):
 # testing multiple datasets I/O and .csv I/O
@@ -150,18 +147,28 @@ def feature_selection_4a(df, par):
     df_new = pd.concat([df_data_new, df_y], axis=1)
     return df_new
 
-def train_sh(df, par):
-
-    # number of columns and rows
+# This method splits 'train_ready' into train/development datasets and stores them
+# in files
+def split_data_5a(df, par):
     
-    df = readZipCSV(par['dir'], par['fname'])
-    
+    # read from a file
+    # TODO: change it to directly read from df
+    df = pd.read_csv(par['dir']+par['fname'])
+    # find number of rows and columns
     num_col = len(df.columns)
     num_row = len(df.index)
     print(num_col, num_row)
     
-    train_ratio = 0.7
+    # read the train_ratio
+    # it is the ratio of trainset to the whole set
+    train_ratio= par['train_ratio']
     
+    # read the random seed
+    random.seed(par['seed'])
+    
+    # split the data
+    # splitting is based on customer ID:
+    # train_ratio (e.g., 70%) of customers will be in trainset
     new_customer_flag = True
     train_flag = False
     train_arr = np.zeros(num_row)
@@ -171,48 +178,48 @@ def train_sh(df, par):
             new_customer_flag = False
         if train_flag:
             train_arr[r] = 1
+        # check the record type column to see whether it is
+        # a new customer ID
         if df.iloc[r,num_col-1] == 1:
             new_customer_flag = True
-    
     print(train_arr)
-    #input()
 
-    train_set = df.iloc[train_arr==1,:]
-    test_set = df.iloc[train_arr==0,:]
+    # split the data into trainset and devset
+    # for now, labels are in the last column of trainset and devset
+    trainset = df.iloc[train_arr==1,:]
+    devset = df.iloc[train_arr==0,:]
     
+    return [trainset, devset]
+
+# This method runs the SVM train model over the trainset.csv and
+# evaluate its performance over the devset.csv
+# input: trainset.csv, devset.csv, model parameters
+# output: logging error rate per parameter combination
+def model_train_dev_svm(df, par):
+    
+    # get the trainset and devset
+    trainset = df[0]
+    devset = df[1]
+
+    # find number of rows and columns
+    num_col = len(trainset.columns)
+    num_row = len(trainset.index)
+
     # get the features and labels
-    train_feature = train_set.iloc[:, 0:(num_col-2)].values
-    train_label = train_set.iloc[:,num_col-1].values
+    train_feature = trainset.iloc[:, 0:(num_col-1)].values
+    train_label = trainset.iloc[:,num_col-1].values
     
-    test_feature = test_set.iloc[:, 0:(num_col-2)].values
-    test_label = test_set.iloc[:,num_col-1].values
+    test_feature = devset.iloc[:, 0:(num_col-1)].values
+    test_label = devset.iloc[:,num_col-1].values
     
     #print(train_feature, train_label, test_feature, test_label)
     print('train/test features and targets extracted')
-    #input()
     
-    clf = svm.SVC()
-    clf.fit(train_feature, train_label)
+    # start to train
+    svm_model = svm_train(train_feature, train_label)
+    svm_test(svm_model, test_feature, test_label, devset, False)
     
-    num_test_cases = len(test_label)
-    if num_test_cases > 0:
-        result = clf.predict(test_feature)
-        
-        print(result, test_label)
-        assert len(result) == len(test_label)
-        
-        num_test_cases = len(test_label)
-        num_err = 0
-        for n in range(num_test_cases):
-            if test_label[n] is not result[n]:
-                num_err += 1
-    
-        print(num_err)
-        print(1.0 * num_err / num_test_cases)
-    else:
-        print('empty test set')
-    
-    return clf
+    return []
 
 def main():
     # The following lines do not need tuning in most cases
@@ -225,8 +232,9 @@ def main():
             '2sandy': preprocess_data_2sandy,
             '3a': create_static_features_3a,
             '4a': feature_selection_4a,
+            '5a': split_data_5a,
             #'1sandy': get_train_purchase_data_1sandy
-            '6a': train_sh
+            '6a': model_train_dev_svm
             }
 
     datasets = {None: None}

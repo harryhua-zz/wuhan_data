@@ -3,7 +3,7 @@ import os
 import zipfile
 import numpy as np
 import pandas as pd
-
+from sklearn import svm
 
 NUM_ONES_COL = 'num_ones'
 NUM_ALL_COL  = 'num_all'
@@ -95,33 +95,126 @@ def discretize(v,nbins,method="linspace"):
         return None
 
 def filterUnmatchedRecord(df):
-	"""
-	author: taku
-	Filter out the records that have unmatched customer characteristics (except for "time"
-	and "day") compared to the last record for each customer.
-	"""	
-	df_benchmark = df.groupby(['customer_ID']).last()
+    """
+    author: taku
+    Filter out the records that have unmatched customer characteristics (except for "time"
+    and "day") compared to the last record for each customer.
+    """	
+    df_benchmark = df.groupby(['customer_ID']).last()
 
-	record_num = len(df)
-	customer_index = 0
-	remove_list = []
-	for i in range(record_num):
-		if df.iloc[i, 0] != df_benchmark.iloc[customer_index, 0]:
-			customer_index += 1
-		
-		if df.iloc[i, 2] == 1: # if record_type=1 then skip
-			continue
-		
-		isMatch = True
-		for column in range(5, 17): #all customer characteristics except for "day" and "time"
-			if df.iloc[i, column] != df_benchmark.iloc[customer_index, column]:
-				if pd.isnull(df.iloc[i, column]) and pd.isnull(df_benchmark.iloc[customer_index, column]):
-					continue
-				isMatch = False
-				break
-				
-		if isMatch == False:
-			remove_list.append(i)
-				
-	df_filtered = df.drop(df.index[remove_list])
-	return df_filtered
+    record_num = len(df)
+    customer_index = 0
+    remove_list = []
+    for i in range(record_num):
+        if df.iloc[i, 0] != df_benchmark.iloc[customer_index, 0]:
+            customer_index += 1
+            
+        if df.iloc[i, 2] == 1: # if record_type=1 then skip
+            continue
+        
+        isMatch = True
+        for column in range(5, 17): #all customer characteristics except for "day" and "time"
+            if df.iloc[i, column] != df_benchmark.iloc[customer_index, column]:
+                if pd.isnull(df.iloc[i, column]) and pd.isnull(df_benchmark.iloc[customer_index, column]):
+                    continue
+                isMatch = False
+                break
+        
+        if isMatch == False:
+            remove_list.append(i)
+
+    df_filtered = df.drop(df.index[remove_list])
+    return df_filtered
+
+# This method trains an SVM model given the features, labels and parameter sets
+# it returns the model object
+def svm_train(train_feature, train_label, params=None):
+
+    clf = svm.SVC(probability=True)
+    clf.fit(train_feature, train_label)
+    
+    return clf
+
+# This method test the model performance
+# if 'naive' is turned on, it simply gives the error rate per row
+# otherwise, it evaluates the final error rate of option combinations
+def svm_test(clf, test_feature, test_label, testset, naive=True):
+    
+    num_row = len(test_label)
+    #print(test_label)
+    if num_row > 0:
+        
+        num_col = len(test_feature[0])
+        #print(num_row, num_col)
+
+        # naive evaluation gives the error rate per row
+        # this is the ordinary way, but is different from our needs
+        if naive:
+            result = clf.predict(test_feature)
+            
+            print(result, test_label)
+            assert len(result) == len(test_label)
+            
+            # derive the error rate
+            num_err = 0
+            for n in range(num_row):
+                if not (test_label[n] == result[n]):
+                    num_err += 1
+                    
+            error_rate = 1.0 * num_err / num_row
+            print('Naive Evaluation:')
+            print('number of mis-predictions: %d, number of test cases: %d, error rate %f, prediction rate %f' \
+                  % (num_err, num_row, error_rate, 1-error_rate) )
+        
+        # if naive is set to False, find the final error rate
+        # for each customer, find the option combination with the highest confidence
+        # compare the predicted combination with the real combination
+        else:
+            result = clf.predict_proba(test_feature)
+            #print(result)
+
+            new_customer_flag = True
+            num_customer = 0
+            num_err = 0
+            for n in range(num_row):
+                
+                if new_customer_flag:
+                    num_customer += 1
+                    max_confidence = -1
+                    max_confidence_idx= n
+                    new_customer_flag = False
+                
+                confidence = result[n][1]
+                #print(confidence)
+                if confidence > max_confidence:
+                    max_confidence = confidence
+                    max_confidence_idx = n
+                
+                if test_label[n] == 1:
+                    new_customer_flag = True
+                    #print('max_confidence: %f, index %d' % (max_confidence, max_confidence_idx))
+                    
+                    # evaluate the prediction rate
+                    idx = n
+                    options_label = [testset.ix[idx,'A'], testset.ix[idx,'B'], testset.ix[idx,'C'], \
+                                     testset.ix[idx,'D'], testset.ix[idx,'E'], testset.ix[idx,'F'], \
+                                     testset.ix[idx,'G']]
+                    idx = max_confidence_idx
+                    predict_label = [testset.ix[idx,'A'], testset.ix[idx,'B'], testset.ix[idx,'C'], \
+                                     testset.ix[idx,'D'], testset.ix[idx,'E'], testset.ix[idx,'F'], \
+                                     testset.ix[idx,'G']]
+                    #print(options_label, predict_label)
+                    if not (options_label == predict_label):
+                        num_err += 1
+            
+            error_rate = 1.0 * num_err / num_customer
+            print('#################')
+            print('Formal Evaluation:')
+            print('number of mis-predictions: %d, number of test cases(customers): %d, error rate %f, prediction rate %f' \
+                  % (num_err, num_customer, error_rate, 1-error_rate) )
+            print('#################')
+            
+    else:
+        print('empty test set, ignore')
+    
+    
