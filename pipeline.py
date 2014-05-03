@@ -4,10 +4,7 @@ from utils import *
 # import configuration file and figure out what to run
 from config import *
 import random
-import numpy as np
-import pandas as pd
-from random import sample
-from sklearn import svm
+
 
 def test_only_0a(df,par):
 # testing multiple datasets I/O and .csv I/O
@@ -152,12 +149,11 @@ def feature_selection_4a(df, par):
 
 # This method splits 'train_ready' into train/development datasets and stores them
 # in files
-
 def split_data_5a(df, par):
     
     # read from a file
     # TODO: change it to directly read from df
-    df = readZipCSV(par['dir'], par['fname'])
+    df = pd.read_csv(par['dir']+par['fname'])
     # find number of rows and columns
     num_col = len(df.columns)
     num_row = len(df.index)
@@ -195,45 +191,35 @@ def split_data_5a(df, par):
     
     return [trainset, devset]
 
-def train_sh(df, par):
+# This method runs the SVM train model over the trainset.csv and
+# evaluate its performance over the devset.csv
+# input: trainset.csv, devset.csv, model parameters
+# output: logging error rate per parameter combination
+def model_train_dev_svm(df, par):
+    
+    # get the trainset and devset
+    trainset = df[0]
+    devset = df[1]
 
-    #input()
+    # find number of rows and columns
+    num_col = len(trainset.columns)
+    num_row = len(trainset.index)
 
     # get the features and labels
-    train_feature = trainset.iloc[:, 0:(num_col-2)].values
+    train_feature = trainset.iloc[:, 0:(num_col-1)].values
     train_label = trainset.iloc[:,num_col-1].values
     
-    test_feature = devset.iloc[:, 0:(num_col-2)].values
+    test_feature = devset.iloc[:, 0:(num_col-1)].values
     test_label = devset.iloc[:,num_col-1].values
     
     #print(train_feature, train_label, test_feature, test_label)
-    print('train/test features and targets extracted')    
-
-    clf = svm.SVC(probability=True)
-    clf.fit(train_feature, train_label)
+    print('train/test features and targets extracted')
     
-    num_test_cases = len(test_label)
-    if num_test_cases > 0:
-        result = clf.predict(test_feature)
-        
-        print(result, test_label)
-        assert len(result) == len(test_label)
-        
-        num_test_cases = len(test_label)
-        num_err = 0
-        sum = 0
-        for n in range(num_test_cases):
-            sum += result[n]
-            if not (test_label[n] == result[n]):
-                num_err += 1
+    # start to train
+    svm_model = svm_train(train_feature, train_label)
+    svm_test(svm_model, test_feature, test_label, devset, False)
     
-        print(num_err, num_test_cases)
-        print(1.0 * num_err / num_test_cases)
-        print(sum)
-    else:
-        print('empty test set')
-    
-    return clf
+    return []
 
 def main():
     # The following lines do not need tuning in most cases
@@ -248,7 +234,7 @@ def main():
             '4a': feature_selection_4a,
             '5a': split_data_5a,
             #'1sandy': get_train_purchase_data_1sandy
-            '6a': train_sh
+            '6a': model_train_dev_svm
             }
 
     datasets = {None: None}

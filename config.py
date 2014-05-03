@@ -1,5 +1,5 @@
 #exec_seq = ['1a','3a']
-exec_seq = ['5a']
+exec_seq = ['6a']
 
 pars = {'0a': None,
         '1a': {'dir': "../data/", 'fname': "train.csv.zip"},
@@ -11,8 +11,8 @@ pars = {'0a': None,
         '3a': {'condprob':(('A','B','C','D','E','F'),('day','state','group_size','homeowner','car_value','risk_factor','married_couple','C_previous','duration_previous'))},
         #'3a': {'condprob':(('A','B'),('day','state'))} # for debugging only
         '4a': {'C': '0.01', 'penalty': 'l1', 'dual': 'False'},
-        '5a': {'train_ratio': 0.7, 'seed': '1000', 'dir': 'data/', 'fname': 'train_5sandy_test.csv.zip'},
-        '6a': {'dir': 'data/', 'fname': 'train_5sandy_test.csv.zip'}
+        '5a': {'train_ratio': 0.7, 'seed': '1000', 'dir': 'data/', 'fname': 'train_5sandy_test_100.csv'},
+        '6a': None
         }
 
 df_in = {'0a': ['test_only_in1','test_only_in2'],
@@ -25,7 +25,7 @@ df_in = {'0a': ['test_only_in1','test_only_in2'],
         '3a': ['train','train'],  # the latter should be train at most times
 		'4a': 'train_3a',
         '5a': [],
-        '6a': []
+        '6a': ['trainset', 'devset']
         }
 
 df_out = {'0a': ['test_only_out1','test_only_out2'],
@@ -38,12 +38,13 @@ df_out = {'0a': ['test_only_out1','test_only_out2'],
         '3a': ['static'],
         '4a': 'train_4a',
         '5a': ['trainset', 'devset'],
-        '6a': 'model'
+        '6a': []
         }
 
 # Names of datasets to be read from disk
 # Can be a string or a list of strings
-df_to_read = {'0a': ['test_only_in1','test_only_in2']
+df_to_read = {'0a': ['test_only_in1','test_only_in2'],
+              '6a': ['trainset', 'devset']
                 }
 
 # Names of datasets to be written to disk
