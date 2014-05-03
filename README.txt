@@ -12,8 +12,9 @@ step 4:
     a: preprocess train/test pool, handle missing, normalization    -- input datasets['train_pool'], output datasets['train_pool']
     b: feature selection                                            -- input datasets['train_pool'], output datasets['train_ready'], to_csv('train_ready.csv')
 step 5:
-    a: split into train/development (7:3) datasets                  -- input datasets['train_ready'], output datasets['trainset','testset'], to_csv('trainset.csv','testset.csv')
-    b: model training                                               -- input datasets['trainset','testset']
+    a: split into train/development (7:3) datasets                  -- input datasets['train_ready'], output datasets['trainset','devset'], to_csv('trainset.csv','devset.csv')
+step 6:
+    a: svm model training and development desting                   -- input datasets['trainset','devset']
 
 
 
