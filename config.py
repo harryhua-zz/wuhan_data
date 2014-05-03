@@ -7,9 +7,10 @@ pars = {'0a': None,
         '2a': None,
         '2fy': {'log': "../log/step_2fy.log"},
         '2sandy': {'missing': '4'},
-        '3a': {'condprob':(('A','B','C','D','E','F'),('day','state','group_size','homeowner','car_value','risk_factor','married_couple','C_previous','duration_previous'))}
+        '3a': {'condprob':(('A','B','C','D','E','F'),('day','state','group_size','homeowner','car_value','risk_factor','married_couple','C_previous','duration_previous'))},
         #'3a': {'condprob':(('A','B'),('day','state'))} # for debugging only
-        '4a': {'C': '0.01', 'penalty': 'l1', 'dual': 'False'}
+        '4a': {'C': '0.01', 'penalty': 'l1', 'dual': 'False'},
+        '6a': {'dir': '../data/', 'fname': 'train_3a_test.csv.zip'}
         }
 
 df_in = {'0a': ['test_only_in1','test_only_in2'],
@@ -19,7 +20,8 @@ df_in = {'0a': ['test_only_in1','test_only_in2'],
         '2fy': 'train',
         '2sandy': 'train_3a',
         '3a': 'train',
-        '4a': 'train_3a'
+        '4a': 'train_3a',
+        '6a': None
         }
 
 df_out = {'0a': ['test_only_out1','test_only_out2'],
@@ -29,7 +31,8 @@ df_out = {'0a': ['test_only_out1','test_only_out2'],
         '2fy': None,
         '2sandy': 'train_2sandy',
         '3a': 'train_3a',
-        '4a': 'train_4a'
+        '4a': 'train_4a',
+        '6a': 'model'
         }
 
 # Names of datasets to be read from disk

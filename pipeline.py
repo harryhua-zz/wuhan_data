@@ -3,6 +3,11 @@ from sklearn import preprocessing # add by sandy
 from utils import *
 # import configuration file and figure out what to run
 from config import *
+import random
+import numpy as np
+import pandas as pd
+from random import sample
+from sklearn import svm
 
 def test_only_0a(df,par):
 # testing multiple datasets I/O and .csv I/O
@@ -104,11 +109,61 @@ def get_train_purchase_data_1sandy(df, par):
 """
 #taku: feature selection
 def feature_selection_4a(df, par):
-	df_data = df.iloc[:,0:len(df.columns) - 1]
-	df_y = df.iloc[:,len(df.columns) - 1]
-	df_data_new = LinearSVC(C=par['C'], penalty=par['penalty'], dual=par['dual']).fit_transform(df_data, df_y)
-	df_new = pd.concat([df_data_new, df_y], axis=1)
-	return df_new
+    df_data = df.iloc[:,0:len(df.columns) - 1]
+    df_y = df.iloc[:,len(df.columns) - 1]
+    df_data_new = LinearSVC(C=par['C'], penalty=par['penalty'], dual=par['dual']).fit_transform(df_data, df_y)
+    df_new = pd.concat([df_data_new, df_y], axis=1)
+    return df_new
+
+def train_sh(df, par):
+
+    # number of columns and rows
+    
+    df = readZipCSV(par['dir'], par['fname'])
+    
+    num_col = len(df.columns)
+    num_row = len(df.index)
+    print(num_col, num_row)
+    
+    train_ratio = 0.7
+    
+    new_customer_flag = True
+    train_flag = False
+    train_arr = np.zeros(num_row)
+    for r in range(num_row):
+        if new_customer_flag:
+            train_flag = (random.random() < train_ratio)
+            new_customer_flag = False
+        if train_flag:
+            train_arr[r] = 1
+        if df.iloc[r,num_col-1] == 1:
+            new_customer_flag = True
+    
+    print(train_arr)
+    #input()
+
+    train_set = df.iloc[train_arr==1,:]
+    test_set = df.iloc[train_arr==0,:]
+    
+    # get the features and labels
+    train_feature = train_set.iloc[:, 0:(num_col-2)].values
+    train_label = train_set.iloc[:,num_col-1].values
+    
+    test_feature = test_set.iloc[:, 0:(num_col-2)].values
+    test_label = test_set.iloc[:,num_col-1].values
+    
+    #print(train_feature, train_label, test_feature, test_label)
+    print('train/test features and targets extracted')
+    #input()
+    
+    clf = svm.SVC()
+    clf.fit(train_feature, train_label)
+    
+    result = clf.predict(test_feature)
+    
+    print(result, test_label)
+    
+    return clf
 
 def main():
     # The following lines do not need tuning in most cases
@@ -119,8 +174,9 @@ def main():
             '2fy': analyze_2fy,
             '2sandy': preprocess_data_2sandy,
             '3a': create_static_features_3a,
-            '4a': feature_selection_4a
+            '4a': feature_selection_4a,
             #'1sandy': get_train_purchase_data_1sandy
+            '6a': train_sh
             }
 
     datasets = {None: None}
