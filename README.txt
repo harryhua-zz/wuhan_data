@@ -13,4 +13,15 @@ step 4:
     b: feature selection                                            -- input datasets['train_pool'], output datasets['train_ready'], to_csv('train_ready.csv')
 step 5:
     a: split into train/development (7:3) datasets                  -- input datasets['train_ready'], output datasets['trainset','testset'], to_csv('trainset.csv','testset.csv')
-    a: model training                                               -- input datasets['trainset','testset']
+    b: model training                                               -- input datasets['trainset','testset']
+
+
+
+
+Note:
+    - All .csv files are to be uploaded to Dropbox: team_share/data/
+
+harry: work on 5a, evaluation, parameter tuning
+sandy: work on 3z, 4a, generate dynamic.csv
+taku: work 2a, 4b, other models
+lawrence: refactor pipeline.py, generate train.csv/static.csv, other models
