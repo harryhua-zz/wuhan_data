@@ -1,5 +1,5 @@
 #exec_seq = ['1a','3a']
-exec_seq = ['4a']
+exec_seq = ['4b']
 
 pars = {'0a': None,
         '1a': {'dir': "../data/", 'fname': "train.csv.zip"},
@@ -14,7 +14,7 @@ pars = {'0a': None,
         #'3z': 0, # 0 presents for train, 1 presents for test
         '3z': None,
         '4a': {'missing': '4'},
-        '4b': {'C': '0.01', 'penalty': 'l1', 'dual': 'False'},
+        '4b': {'C' : 0.01, 'penalty' : 'l1', 'dual' : False, 'isTest': False},
         '5a': {'train_ratio': 0.7, 'seed': '1000', 'dir': 'data/', 'fname': 'train_5sandy_test_100.csv'},
         '6a': None
         }
@@ -30,7 +30,7 @@ df_in = {'0a': 'test_only_in1',
         '3b': ['train'],
         '3z': ['train','static','dynamic'],
         '4a': 'train_pool',
-        '4b': 'train_3a',
+        '4b': ['train_pool','selected_features'],
         '5a': [],
         '6a': ['trainset', 'devset']
         }
@@ -46,7 +46,7 @@ df_out = {'0a': ['test_only_out1','test_only_out2'],
         '3b': 'dynamic',
         '3z': ['train_pool','train_target'],
         '4a': 'train_preprocessing',
-        '4b': 'train_4a',
+        '4b': ['train_ready','selected_features'],
         '5a': ['trainset', 'devset'],
         '6a': []
         }
@@ -56,6 +56,7 @@ df_out = {'0a': ['test_only_out1','test_only_out2'],
 df_to_read = {'0a': ['test_only_in1','test_only_in2'],
               '3z': ['static','train','dynamic'],
               '4a': ['train_pool'],
+              '4b': ['train_pool','selected_features'],
               '6a': ['trainset', 'devset']
                 }
 
@@ -68,5 +69,6 @@ df_to_write = {'0a': ['test_only_out1','test_only_out2'],
                '3b': 'dynamic',
                '3z': ['train_pool','train_target'],
                '4a': 'train_preprocessing',
+               '4b': ['train_ready','selected_features'],
                '5a': ['trainset', 'devset']
                 }

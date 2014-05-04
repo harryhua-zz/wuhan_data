@@ -1,5 +1,7 @@
 import sys
 from sklearn import preprocessing # add by sandy
+from sklearn import svm
+from sklearn.svm import LinearSVC
 from utils import *
 # import configuration file and figure out what to run
 from config import *
@@ -208,11 +210,41 @@ def preprocess_train_4a(df, par):
 
 #taku: feature selection
 def feature_selection_4b(df, par):
-    df_data = df.iloc[:,0:len(df.columns) - 1]
-    df_y = df.iloc[:,len(df.columns) - 1]
-    df_data_new = LinearSVC(C=par['C'], penalty=par['penalty'], dual=par['dual']).fit_transform(df_data, df_y)
-    df_new = pd.concat([df_data_new, df_y], axis=1)
-    return df_new
+    df_data = df[0].iloc[:,0:len(df[0].columns) - 1]
+    df_y = df[0].iloc[:,len(df[0].columns) - 1]
+    selected_features = df[1]
+    df_options = df_data.loc[:,['A', 'B', 'C', 'D', 'E', 'F', 'G']]
+    df_without_options = df_data.drop(['A', 'B', 'C', 'D', 'E', 'F', 'G'], axis = 1) #remove option combination from the data frame incase they will be removed by feature selection
+
+    if par['isTest'] == False:
+        df_data_new = LinearSVC(C = par['C'], penalty = par['penalty'], dual = par['dual']).fit_transform(df_without_options.values, df_y.values)
+
+        #identify the selected features
+        selected_features = []
+        for column_new in range(0, df_data_new.shape[1]) : 
+            for column_old in range(0, len(df_without_options.columns)):
+                isEqual = True
+                for i in range(0, 100):
+                    if df_data_new[i][column_new] != df_without_options.iloc[i, column_old]:
+                        isEqual = False
+                        break
+                if isEqual == True:
+                    selected_features.append(column_old)
+                    break       
+                
+    df_trainready = []
+    if par['isTest'] == False:
+        df_trainready_data_without_options = df_without_options.iloc[:, selected_features]
+    else:
+        df_trainready_data_without_options = df_without_options.iloc[:, selected_features.iloc[:,0]]
+    df_trainready.append(pd.concat([df_trainready_data_without_options, df_options, pd.DataFrame(df_y,index = list(range(len(df_options))),columns=['record_type'])], axis = 1))
+    if par['isTest'] == False:
+        df_trainready.append(pd.DataFrame(selected_features, index = list(range(len(selected_features))),columns=['feature_column']))
+    else:
+        df_trainready.append(selected_features)
+    df_trainready[0].to_csv('result.csv', index=False)
+
+    return df_trainready
 
 # This method splits 'train_ready' into train/development datasets and stores them
 # in files
