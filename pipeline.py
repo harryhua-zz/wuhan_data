@@ -110,40 +110,104 @@ def create_static_features_3a(df, par):
 
     return [pd.DataFrame(static_features)]
 
+#Sandy: create dynamic features
+# question to yangfan: what is helper_features used to? 
+def create_dynamic_features_3b(df,par):
+    input_features = df[0]
+    #helper_features = df[1]
+    merge_col_option = mergeOptionsCol(input_features)
+    df_mergeOption = pd.concat([input_features,merge_col_option],axis=1)
+    df_small = df_mergeOption.loc[:,['customer_ID','option_combine','record_type']]
+  
+    isDuplicate = []    # column "is_Duplicate"
+    isLastQuote = []    # column "is_LastQuote"
+    quote_frequency = []    # column "quote_Frequency"
+    quote_percent = []  # column "quote_Percent"
+    
+    rowindex = len(df_small)
+    i = 0   # index of the start row of one customer
+    j = 0   # index of the start row of next customer
+    while (j < rowindex):
+        current_customerID = df_small.loc[i,'customer_ID']
+        # move j to the start row of next customer
+        while ((df_small.iloc[j,0] == current_customerID)):
+            j +=1
+            if j == rowindex:
+                break
+        
+        k = j - 1   # set k to the end row of current customer
+        quote_count = j - i # the total number of quotes for current customer
+        if (quote_count < 1):
+            print ("Error: number of quote history is less than 1")
+        option_set = set()  # a set used to check the duplicate option_combine
+        option_dict = {}    # a dictionary to record the frequency for each option_combine
+        # last quote for current customer        
+        if (df_small.loc[k, 'record_type'] == 0):
+            last_quote = df_small.loc[k,'option_combine'] 
+        elif (quote_count > 1): 
+            last_quote = df_small.loc[k-1,'option_combine']
+        else:
+            last_quote = -1     # no last quote for this customer 
+        # iterate all rows for current customer from backward
+        while (k>=i):            
+            option_value = df_small.loc[k,'option_combine']
+            # compute the value for column of "is_Duplicate"
+            if (option_value in option_set):
+                isDuplicate.insert(i,1)
+            else:
+                isDuplicate.insert(i,0)
+                option_set.add(option_value)
+            # count the frequency for each option_combine
+            if (option_value in option_dict):
+                option_dict[option_value] += 1
+            else:
+                option_dict[option_value] = 1
+            k -= 1
+        # iterate all rows to set the value for column "is_LastQuote", "quote_Frequency" and "quote_Percent"
+        t = i
+        while (t < j):
+            option = df_small.loc[t,'option_combine']
+            frequency = option_dict[option]
+            quote_frequency.append(frequency)
+            #quote_percent.append(round(frequency*1.0/quote_count,2))
+            quote_percent.append(frequency*1.0/quote_count)
+            # compute the value for column of "is_LastQuote"
+            if (option == last_quote):
+                isLastQuote.append(1)
+            else:
+                isLastQuote.append(0)
+            t +=1
+        i = j
+        
+    isDuplicate_df = pd.DataFrame(isDuplicate,index = list(range(rowindex)),columns=['is_Duplicate'])
+    isLastQuote_df = pd.DataFrame(isLastQuote,index = list(range(rowindex)),columns=['is_LastQuote'])
+    quote_frequency_df = pd.DataFrame(quote_frequency,index = list(range(rowindex)),columns=['quote_Frequency'])
+    quote_percent_df = pd.DataFrame(quote_percent,index = list(range(rowindex)),columns=['quote_Percent'])
+    dynamic_features = pd.concat([isDuplicate_df,isLastQuote_df, quote_frequency_df, quote_percent_df], axis =1)
+    return dynamic_features
+        
+def merge_datasets_3z(df, par):
+    origin_train = df[0]
+    static_dataset = df[1]
+    dynamic_dataset = df[2]
+    print(len(origin_train))
+    train_select = origin_train.loc[:,['A','B','C','D','E','F','G','record_type']]
+    train_pool_full = pd.concat([static_dataset,dynamic_dataset, train_select], axis = 1)
+    dataset_nonduplicate = filterDuplicate(train_pool_full)
+    train_target = pd.DataFrame(dataset_nonduplicate.loc[:,['A','B','C','D','E','F','G','is_LastQuote','record_type']], columns = ['A','B','C','D','E','F','G','is_LastQuote','record_type'])
+    print(len(train_target))
+    train_pool = dataset_nonduplicate.drop(['record_type','is_Duplicate','is_LastQuote','A','B','C','D','E','F','G'],axis=1)
+    print(len(train_pool))
+    return [train_pool, train_target]
+
 #sandy: data preprocessing
-def preprocess_data_2sandy(df, par):
-    print(par['missing'])
-    #sandy: handle the missing value
-    filtered_train = pd.DataFrame([])
-    if cmp(par['missing'], '1') == 0:
-        print('par_missing == 1')
-        filtered_train = df.dropna(axis=0) # drop rows with NA
-    elif cmp(par['missing'], '2') == 0:
-        filtered_train = df.dropna(axis=1) # drop columns with NA
-    elif cmp(par['missing'], '3') == 0:
-        filtered_train = df.fillna(value = 0) # fill missing value with 0 (this execution is not work now)
-    elif cmp(par['missing'], '4') == 0:
-        filtered_train = df.fillna(df.mean())     # fill missing value with mean
+def preprocess_train_4a(df, par):
+    dataset_nomissing = handleMissing (df, par['missing'])
+    dataset_norm = Normalize(dataset_nomissing)
+    return dataset_norm
 
-    """
-    filtered_train_scale = preprocessing.scale(filtered_train.to_records())
-    filtered_train_scale_df = pd.DataFrame( filtered_train_scale[1:,1:],
-                                           index=filtered_train_scale[1:,0], columns=filtered_train_scale[0,1:] )
-    """
-    #sandy: normalize the data
-    filtered_train_norm = (filtered_train - filtered_train.mean()) / (filtered_train.max() - filtered_train.min())
-
-    return filtered_train_norm
-
-"""
-#sandy: only keep the purchase record in train
-def get_train_purchase_data_1sandy(df, par):
-    df_purchase = df[df['record_type'] == 1]
-    #print df_purchase
-    return df_purchase
-"""
 #taku: feature selection
-def feature_selection_4a(df, par):
+def feature_selection_4b(df, par):
     df_data = df.iloc[:,0:len(df.columns) - 1]
     df_y = df.iloc[:,len(df.columns) - 1]
     df_data_new = LinearSVC(C=par['C'], penalty=par['penalty'], dual=par['dual']).fit_transform(df_data, df_y)
@@ -233,11 +297,12 @@ def main():
             '2b': recode_features_2b,
             '2fy1': summarize_data_2a,
             '2fy2': analyze_2fy,
-            '2sandy': preprocess_data_2sandy,
             '3a': create_static_features_3a,
-            '4a': feature_selection_4a,
+            '3b': create_dynamic_features_3b,
+            '3z': merge_datasets_3z,
+            '4a': preprocess_train_4a,
+            '4b': feature_selection_4b,
             '5a': split_data_5a,
-            #'1sandy': get_train_purchase_data_1sandy
             '6a': model_train_dev_svm
             }
 
@@ -245,12 +310,13 @@ def main():
 
     for id in exec_seq:
         # read in dataframes from .csv files on disk as needed
+        print(id)
         if id in df_to_read:
             if isinstance(df_to_read[id],list):
                 for dfName in df_to_read[id]:
-                    datasets[dfName] = pd.read_csv('data/'+dfName+'.csv')
+                    datasets[dfName] = pd.read_csv('../data/'+dfName+'.csv')
             else:
-                datasets[df_to_read[id]] = pd.read_csv('data/'+df_to_read[id]+'.csv')
+                datasets[df_to_read[id]] = pd.read_csv('../data/'+df_to_read[id]+'.csv')
         # major loop that calls all the steps in execution sequence
         inputDataframes = lookupDict(datasets,df_in[id])
         if isinstance(df_out[id],list):
@@ -262,11 +328,14 @@ def main():
             datasets[df_out[id]] = steps[id](inputDataframes,pars[id])
         # write dataframes to .csv files on disk as needed
         if id in df_to_write:
+            print(id)
             if isinstance(df_to_write[id],list):
                 for dfName in df_to_write[id]:
-                    datasets[dfName].to_csv('data/'+dfName+'.csv',index=False,float_format='%.4f')
+                    print(dfName)
+                    datasets[dfName].to_csv('../data/'+dfName+'.csv',index=False,float_format='%.4f')
             else:
-                datasets[df_to_write[id]].to_csv('data/'+df_to_write[id]+'.csv',index=False,float_format='%.4f')
-
+                print(df_to_write[id])
+                #datasets[df_to_write[id]].to_csv('data/'+df_to_write[id]+'.csv',index=False,float_format='%.4f')
+                datasets[df_to_write[id]].to_csv('../data/'+df_to_write[id]+'.csv',index=False,float_format='%.4f')
 if __name__ == "__main__":
     main()

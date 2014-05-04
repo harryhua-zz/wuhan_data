@@ -16,7 +16,8 @@ def readZipCSV(dir, fileName):
 
 def printList(aList,format):
     for item in aList:
-        print(format % (item),end="")
+        #print(format % (item),end="")
+        print(format % (item))
     print('\n')
 
 def lookupDict(dict,keys):
@@ -34,7 +35,8 @@ def gen1DRiskTable(df,catVarName,targetVarName,targetValue):
     return pd.DataFrame({NUM_ONES_COL:ones,NUM_ALL_COL:all,RISK_COL:ones/all}).fillna(0)
 
 def print1DRiskTable(rt,out):
-    print(rt.sort(RISK_COL,ascending=False).to_string(),file=out)
+    #print(rt.sort(RISK_COL,ascending=False).to_string(),file=out)
+    print(rt.sort(RISK_COL,ascending=False).to_string())
 
 def genRiskTable(df,catVarNameList,targetVarName):
     """
@@ -228,4 +230,48 @@ def svm_test(clf, test_feature, test_label, testset, naive=True):
     else:
         print('empty test set, ignore')
 
+def mergeOptionsCol(df):
+    """
+    Sandy:
+    Merge A-G option columns into one new column.
+    Return a new data frame with the new column
+    """
+    merge_col = df['A']*10**6 + df['B']*10**5 + df['C']*10**4 + df['D']*10**3 + df['E']*10**2 + df['F']*10 + df['G']   
+    merge_col_df = merge_col.to_frame(name = 'option_combine')
+    #return pd.concat([df,merge_col_df],axis=1)
+    return merge_col_df
+    
+def filterDuplicate(df):
+    """
+    Sandy:
+    Filter duplicate records based on the column "is_Duplicate"
+    """
+    t = df.loc[:, 'is_Duplicate']
+    return df[t==0]
+    
+def handleMissing(df, missing_choice):
+    """
+    sandy: handle the missing value
+    """
+    print(missing_choice)
 
+    filtered_train = pd.DataFrame([])
+    if cmp(missing_choice, '1') == 0:
+        print('par_missing == 1')
+        filtered_train = df.dropna(axis=0) # drop rows with NA
+    elif cmp(missing_choice, '2') == 0:
+        filtered_train = df.dropna(axis=1) # drop columns with NA
+    elif cmp(missing_choice, '3') == 0:
+        filtered_train = df.fillna(value = 0) # fill missing value with 0 (this execution is not work now)
+    elif cmp(missing_choice, '4') == 0:
+        filtered_train = df.fillna(df.mean())     # fill missing value with mean
+    
+    return filtered_train
+    
+def Normalize(df):
+    """
+    normalize the data
+    """
+    filtered_train_norm = (df - df.mean()) / (df.max() - df.min())
+    return filtered_train_norm
+       
