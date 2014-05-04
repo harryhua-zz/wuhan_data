@@ -19,6 +19,15 @@ def printList(aList,format):
         print(format % (item),end="")
     print('\n')
 
+def lookupDict(dict,keys):
+    """
+    Get a value for a key, or a list of values for a list of keys
+    """
+    if isinstance(keys,list):
+        return [dict.get(k) for k in keys]
+    else:
+        return dict.get(keys)
+
 def gen1DRiskTable(df,catVarName,targetVarName,targetValue):
     all = df.loc[:,catVarName].value_counts()
     ones = df.loc[df.loc[:,targetVarName]==targetValue,catVarName].value_counts()
@@ -99,7 +108,7 @@ def filterUnmatchedRecord(df):
 	author: taku
 	Filter out the records that have unmatched customer characteristics (except for "time"
 	and "day") compared to the last record for each customer.
-	"""	
+	"""
 	df_benchmark = df.groupby(['customer_ID']).last()
 
 	record_num = len(df)
@@ -108,10 +117,10 @@ def filterUnmatchedRecord(df):
 	for i in range(record_num):
 		if df.iloc[i, 0] != df_benchmark.iloc[customer_index, 0]:
 			customer_index += 1
-		
+
 		if df.iloc[i, 2] == 1: # if record_type=1 then skip
 			continue
-		
+
 		isMatch = True
 		for column in range(5, 17): #all customer characteristics except for "day" and "time"
 			if df.iloc[i, column] != df_benchmark.iloc[customer_index, column]:
@@ -119,9 +128,9 @@ def filterUnmatchedRecord(df):
 					continue
 				isMatch = False
 				break
-				
+
 		if isMatch == False:
 			remove_list.append(i)
-				
+
 	df_filtered = df.drop(df.index[remove_list])
 	return df_filtered

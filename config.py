@@ -1,5 +1,5 @@
-#exec_seq = ['1a','3a']
-exec_seq = ['1a','2b','3a']
+#exec_seq = ['1a','2b','3a']
+exec_seq = ['0a']
 
 pars = {'0a': None,
         '1a': {'dir': "../data/", 'fname': "train.csv.zip"},
@@ -14,14 +14,14 @@ pars = {'0a': None,
         '6a': {'dir': '../data/', 'fname': 'train_3a_test.csv.zip'}
         }
 
-df_in = {'0a': ['test_only_in1','test_only_in2'],
+df_in = {'0a': 'test_only_in1',
         '1a': None,
         '1b': None,
         '2a': 'train',
         '2b': ['train','train'], # the latter should be train at most times
         '2fy': 'train',
         '2sandy': 'train_3a',
-        '3a': ['train','train'],  # the latter should be train at most times        
+        '3a': ['train','train'],  # the latter should be train at most times
 		'4a': 'train_3a',
         '6a': None
         }

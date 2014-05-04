@@ -153,15 +153,15 @@ def feature_selection_4a(df, par):
 def train_sh(df, par):
 
     # number of columns and rows
-    
+
     df = readZipCSV(par['dir'], par['fname'])
-    
+
     num_col = len(df.columns)
     num_row = len(df.index)
     print(num_col, num_row)
-    
+
     train_ratio = 0.7
-    
+
     new_customer_flag = True
     train_flag = False
     train_arr = np.zeros(num_row)
@@ -173,45 +173,45 @@ def train_sh(df, par):
             train_arr[r] = 1
         if df.iloc[r,num_col-1] == 1:
             new_customer_flag = True
-    
+
     print(train_arr)
     #input()
 
     train_set = df.iloc[train_arr==1,:]
     test_set = df.iloc[train_arr==0,:]
-    
+
     # get the features and labels
     train_feature = train_set.iloc[:, 0:(num_col-2)].values
     train_label = train_set.iloc[:,num_col-1].values
-    
+
     test_feature = test_set.iloc[:, 0:(num_col-2)].values
     test_label = test_set.iloc[:,num_col-1].values
-    
+
     #print(train_feature, train_label, test_feature, test_label)
     print('train/test features and targets extracted')
     #input()
-    
+
     clf = svm.SVC()
     clf.fit(train_feature, train_label)
-    
+
     num_test_cases = len(test_label)
     if num_test_cases > 0:
         result = clf.predict(test_feature)
-        
+
         print(result, test_label)
         assert len(result) == len(test_label)
-        
+
         num_test_cases = len(test_label)
         num_err = 0
         for n in range(num_test_cases):
             if test_label[n] is not result[n]:
                 num_err += 1
-    
+
         print(num_err)
         print(1.0 * num_err / num_test_cases)
     else:
         print('empty test set')
-    
+
     return clf
 
 def main():
@@ -240,16 +240,14 @@ def main():
             else:
                 datasets[df_to_read[id]] = pd.read_csv('data/'+df_to_read[id]+'.csv')
         # major loop that calls all the steps in execution sequence
+        inputDataframes = lookupDict(datasets,df_in[id])
         if isinstance(df_out[id],list):
             # if we need to output multiple datasets, then the 'steps' function must return a list of dataframe
-            inList = []
-            for dfName in df_in[id]:
-                inList.append(datasets[dfName])
-            retList = steps[id](inList, pars[id])
-            for dfName, df in zip(df_out[id],retList):
+            retDataframes = steps[id](inputDataframes,pars[id])
+            for dfName, df in zip(df_out[id],retDataframes):
                 datasets[dfName] = df
         else:
-            datasets[df_out[id]] = steps[id](datasets[df_in[id]], pars[id])
+            datasets[df_out[id]] = steps[id](inputDataframes,pars[id])
         # write dataframes to .csv files on disk as needed
         if id in df_to_write:
             if isinstance(df_to_write[id],list):
