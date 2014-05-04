@@ -30,6 +30,9 @@ def summarize_data_2a(df, par):
     print("================================================================================================================")
     return None
 
+def filter_records_2a(df, par):
+    return filterUnmatchedRecord(df)
+
 def recode_features_2b(df, par):
     """
     Recode some continuous original features and append to the same data set
@@ -226,9 +229,10 @@ def main():
     steps = {'0a': test_only_0a,
             '1a': read_train_data_1a,
             '1b': read_test_data_1b,
-            '2a': summarize_data_2a,
+            '2a': filter_records_2a,
             '2b': recode_features_2b,
-            '2fy': analyze_2fy,
+            '2fy1': summarize_data_2a,
+            '2fy2': analyze_2fy,
             '2sandy': preprocess_data_2sandy,
             '3a': create_static_features_3a,
             '4a': feature_selection_4a,
@@ -260,9 +264,9 @@ def main():
         if id in df_to_write:
             if isinstance(df_to_write[id],list):
                 for dfName in df_to_write[id]:
-                    datasets[dfName].to_csv('data/'+dfName+'.csv',index=False)
+                    datasets[dfName].to_csv('data/'+dfName+'.csv',index=False,float_format='%.4f')
             else:
-                datasets[df_to_write[id]].to_csv('data/'+df_to_write[id]+'.csv',index=False)
+                datasets[df_to_write[id]].to_csv('data/'+df_to_write[id]+'.csv',index=False,float_format='%.4f')
 
 if __name__ == "__main__":
     main()
