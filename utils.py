@@ -110,12 +110,14 @@ def filterUnmatchedRecord(df):
     and "day") compared to the last record for each customer.
     """
     df_benchmark = df.groupby(['customer_ID']).last()
+    df_customer_ids = df_benchmark.index.values
 
     record_num = len(df)
     customer_index = 0
     remove_list = []
     for i in range(record_num):
-        if df.iloc[i, 0] != df_benchmark.iloc[customer_index, 0]:
+        #if df.iloc[i, 0] != df_benchmark.iloc[customer_index, 0]:
+        if df.iloc[i, 0] != df_customer_ids[customer_index]:
             customer_index += 1
 
         if df.iloc[i, 2] == 1: # if record_type=1 then skip
@@ -123,8 +125,8 @@ def filterUnmatchedRecord(df):
 
         isMatch = True
         for column in range(5, 17): #all customer characteristics except for "day" and "time"
-            if df.iloc[i, column] != df_benchmark.iloc[customer_index, column]:
-                if pd.isnull(df.iloc[i, column]) and pd.isnull(df_benchmark.iloc[customer_index, column]):
+            if df.iloc[i, column] != df_benchmark.iloc[customer_index, column-1]:
+                if pd.isnull(df.iloc[i, column]) and pd.isnull(df_benchmark.iloc[customer_index, column-1]):
                     continue
                 isMatch = False
                 break

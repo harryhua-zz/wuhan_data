@@ -9,8 +9,8 @@ pars = {'0a': None,
         '2fy1': {'log': "../log/step_2fy.log"},
         '2fy2': None,
         '2sandy': {'missing': '4'},
-        #'3a': {'condprob':(('A','B','C','D','E','F'),('day','state','group_size','homeowner','car_value','risk_factor','married_couple','C_previous','duration_previous'))},
-        '3a': {'condprob':(('A','B'),('day','r_hour'))}, # for debugging only
+        '3a': {'condprob':(('A','B','C','D','E','F'),('day','state','group_size','homeowner','car_value','risk_factor','married_couple','C_previous','duration_previous','r_hour','r_location','r_car_age','r_age_oldest','r_age_youngest','r_cost'))},
+        #'3a': {'condprob':(('A','B'),('day','r_hour'))}, # for debugging only
         '4a': {'C': '0.01', 'penalty': 'l1', 'dual': 'False'},
         '5a': {'train_ratio': 0.7, 'seed': '1000', 'dir': 'data/', 'fname': 'train_5sandy_test_100.csv'},
         '6a': None
@@ -53,6 +53,7 @@ df_to_read = {'0a': ['test_only_in1','test_only_in2'],
 # Names of datasets to be written to disk
 # Can be a string or a list of strings
 df_to_write = {'0a': ['test_only_out1','test_only_out2'],
+               '2a': 'train',
                '2b': 'train',
                '3a': 'static',
                '5a': ['trainset', 'devset']
