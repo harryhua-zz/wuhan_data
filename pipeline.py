@@ -210,7 +210,7 @@ def preprocess_train_4a(df, par):
 
 #taku: feature selection
 def feature_selection_4b(df, par):
-    df_data = df[0].iloc[:,0:len(df[0].columns) - 1]
+    df_data = df[0]
     df_y = df[2]
     selected_features = df[1]
     df_options = df_data.loc[:,['A', 'B', 'C', 'D', 'E', 'F', 'G']]
