@@ -113,19 +113,19 @@ def create_static_features_3a(df, par):
     return [pd.DataFrame(static_features)]
 
 #Sandy: create dynamic features
-# question to yangfan: what is helper_features used to? 
+# question to yangfan: what is helper_features used to?
 def create_dynamic_features_3b(df,par):
     input_features = df[0]
     #helper_features = df[1]
     merge_col_option = mergeOptionsCol(input_features)
     df_mergeOption = pd.concat([input_features,merge_col_option],axis=1)
     df_small = df_mergeOption.loc[:,['customer_ID','option_combine','record_type']]
-  
+
     isDuplicate = []    # column "is_Duplicate"
     isLastQuote = []    # column "is_LastQuote"
     quote_frequency = []    # column "quote_Frequency"
     quote_percent = []  # column "quote_Percent"
-    
+
     rowindex = len(df_small)
     i = 0   # index of the start row of one customer
     j = 0   # index of the start row of next customer
@@ -136,22 +136,22 @@ def create_dynamic_features_3b(df,par):
             j +=1
             if j == rowindex:
                 break
-        
+
         k = j - 1   # set k to the end row of current customer
         quote_count = j - i # the total number of quotes for current customer
         if (quote_count < 1):
             print ("Error: number of quote history is less than 1")
         option_set = set()  # a set used to check the duplicate option_combine
         option_dict = {}    # a dictionary to record the frequency for each option_combine
-        # last quote for current customer        
+        # last quote for current customer
         if (df_small.loc[k, 'record_type'] == 0):
-            last_quote = df_small.loc[k,'option_combine'] 
-        elif (quote_count > 1): 
+            last_quote = df_small.loc[k,'option_combine']
+        elif (quote_count > 1):
             last_quote = df_small.loc[k-1,'option_combine']
         else:
-            last_quote = -1     # no last quote for this customer 
+            last_quote = -1     # no last quote for this customer
         # iterate all rows for current customer from backward
-        while (k>=i):            
+        while (k>=i):
             option_value = df_small.loc[k,'option_combine']
             # compute the value for column of "is_Duplicate"
             if (option_value in option_set):
@@ -180,14 +180,14 @@ def create_dynamic_features_3b(df,par):
                 isLastQuote.append(0)
             t +=1
         i = j
-        
+
     isDuplicate_df = pd.DataFrame(isDuplicate,index = list(range(rowindex)),columns=['is_Duplicate'])
     isLastQuote_df = pd.DataFrame(isLastQuote,index = list(range(rowindex)),columns=['is_LastQuote'])
     quote_frequency_df = pd.DataFrame(quote_frequency,index = list(range(rowindex)),columns=['quote_Frequency'])
     quote_percent_df = pd.DataFrame(quote_percent,index = list(range(rowindex)),columns=['quote_Percent'])
     dynamic_features = pd.concat([isDuplicate_df,isLastQuote_df, quote_frequency_df, quote_percent_df], axis =1)
     return dynamic_features
-        
+
 def merge_datasets_3z(df, par):
     origin_train = df[0]
     static_dataset = df[1]
@@ -221,7 +221,7 @@ def feature_selection_4b(df, par):
 
         #identify the selected features
         selected_features = []
-        for column_new in range(0, df_data_new.shape[1]) : 
+        for column_new in range(0, df_data_new.shape[1]) :
             for column_old in range(0, len(df_without_options.columns)):
                 isEqual = True
                 for i in range(0, 100):
@@ -230,8 +230,8 @@ def feature_selection_4b(df, par):
                         break
                 if isEqual == True:
                     selected_features.append(column_old)
-                    break       
-                
+                    break
+
     df_trainready = []
     if par['isTest'] == False:
         df_trainready_data_without_options = df_without_options.iloc[:, selected_features]
