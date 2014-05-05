@@ -46,6 +46,8 @@ def recode_features_2b(df, par):
     recoded_features = df[0]
     helper_features = df[1]
 
+    car_value_map = {'a':0,'b':1,'c':2,'d':3,'e':4,'f':5,'g':6,'h':7,'i':8}
+    recoded_features['car_value'] = recoded_features['car_value'].apply(lambda x: car_value_map.get(x))
     recoded_features['hour'] = recoded_features['time'].apply(lambda x: int(x.split(':')[0]))
     recoded_features['r_hour'] = pd.cut(recoded_features['hour'],[-1,6,12,18,24]).labels
     recoded_features['r_car_age'] = pd.cut(recoded_features['car_age'],[-1,3,7,12,100]).labels
@@ -250,7 +252,7 @@ def feature_selection_4b(df, par):
 # This method splits 'train_ready' into train/development datasets and stores them
 # in files
 def split_data_5a(df, par):
-    
+
     # Form a single data frame by merging data and target
     df_data = df[0]
     df_target = df[1]
@@ -316,14 +318,14 @@ def model_train_dev_svm(df, par):
 
     #print(train_feature, train_label, test_feature, test_label)
     print('%s train/test features and targets extracted' % datetime.datetime.now())
-    
+
     # start to train
     svm_model = svm_train(train_feature, train_label)
     print('%s training completed' % datetime.datetime.now())
-    
+
     svm_test(svm_model, test_feature, test_label, devset, False)
     print('%s development testing completed' % datetime.datetime.now())
-    
+
     return []
 
 def main():
