@@ -139,7 +139,7 @@ def filterUnmatchedRecord(df, columns):
 # it returns the model object
 def svm_train(train_feature, train_label, params=None):
 
-    clf = svm.SVC(probability=True)
+    clf = svm.SVC(probability=True, verbose=True, max_iter=100000, kernel='linear')
     clf.fit(train_feature, train_label)
 
     return clf

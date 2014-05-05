@@ -6,6 +6,7 @@ from utils import *
 # import configuration file and figure out what to run
 from config import *
 import random
+import datetime
 
 
 def test_only_0a(df,par):
@@ -249,10 +250,12 @@ def feature_selection_4b(df, par):
 # This method splits 'train_ready' into train/development datasets and stores them
 # in files
 def split_data_5a(df, par):
+    
+    # Form a single data frame by merging data and target
+    df_data = df[0]
+    df_target = df[1]
+    df = pd.concat([df_data, df_target], axis = 1)
 
-    # read from a file
-    # TODO: change it to directly read from df
-    df = pd.read_csv(par['dir']+par['fname'])
     # find number of rows and columns
     num_col = len(df.columns)
     num_row = len(df.index)
@@ -312,12 +315,15 @@ def model_train_dev_svm(df, par):
     test_label = devset.iloc[:,num_col-1].values
 
     #print(train_feature, train_label, test_feature, test_label)
-    print('train/test features and targets extracted')
-
+    print('%s train/test features and targets extracted' % datetime.datetime.now())
+    
     # start to train
     svm_model = svm_train(train_feature, train_label)
+    print('%s training completed' % datetime.datetime.now())
+    
     svm_test(svm_model, test_feature, test_label, devset, False)
-
+    print('%s development testing completed' % datetime.datetime.now())
+    
     return []
 
 def main():

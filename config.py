@@ -31,7 +31,7 @@ df_in = {'0a': 'test_only_in1',
         '3z': ['train','static','dynamic'],
         '4a': 'train_pool',
         '4b': ['train_preprocessing','selected_features','train_target'],
-        '5a': [],
+        '5a': ['train_ready', 'train_target'],
         '6a': ['trainset', 'devset']
         }
 
@@ -58,6 +58,7 @@ df_to_read = {'0a': ['test_only_in1','test_only_in2'],
               #'3z': ['static','train','dynamic'],
               '4a': ['train_pool'],
               #'4b': ['train_preprocessing','selected_features','train_target'],
+              '5a': ['train_ready', 'train_target'],
               '6a': ['trainset', 'devset']
                 }
 
