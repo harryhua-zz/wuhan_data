@@ -211,7 +211,7 @@ def preprocess_train_4a(df, par):
 #taku: feature selection
 def feature_selection_4b(df, par):
     df_data = df[0].iloc[:,0:len(df[0].columns) - 1]
-    df_y = df[0].iloc[:,len(df[0].columns) - 1]
+    df_y = df[2]
     selected_features = df[1]
     df_options = df_data.loc[:,['A', 'B', 'C', 'D', 'E', 'F', 'G']]
     df_without_options = df_data.drop(['A', 'B', 'C', 'D', 'E', 'F', 'G'], axis = 1) #remove option combination from the data frame incase they will be removed by feature selection
@@ -237,7 +237,7 @@ def feature_selection_4b(df, par):
         df_trainready_data_without_options = df_without_options.iloc[:, selected_features]
     else:
         df_trainready_data_without_options = df_without_options.iloc[:, selected_features.iloc[:,0]]
-    df_trainready.append(pd.concat([df_trainready_data_without_options, df_options, pd.DataFrame(df_y,index = list(range(len(df_options))),columns=['record_type'])], axis = 1))
+    df_trainready.append(pd.concat([df_trainready_data_without_options, df_options], axis = 1))
     if par['isTest'] == False:
         df_trainready.append(pd.DataFrame(selected_features, index = list(range(len(selected_features))),columns=['feature_column']))
     else:
