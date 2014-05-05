@@ -24,7 +24,7 @@ df_in = {'0a': ['test_only_in1','test_only_in2'],
         '2sandy': 'train_3a',
         '3a': ['train','train'],  # the latter should be train at most times
 		'4a': 'train_3a',
-        '5a': [],
+        '5a': ['train_ready', 'train_target'],
         '6a': ['trainset', 'devset']
         }
 
@@ -44,6 +44,7 @@ df_out = {'0a': ['test_only_out1','test_only_out2'],
 # Names of datasets to be read from disk
 # Can be a string or a list of strings
 df_to_read = {'0a': ['test_only_in1','test_only_in2'],
+              '5a': ['train_ready', 'train_target'],
               '6a': ['trainset', 'devset']
                 }
 

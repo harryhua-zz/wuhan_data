@@ -152,9 +152,11 @@ def feature_selection_4a(df, par):
 # in files
 def split_data_5a(df, par):
     
-    # read from a file
-    # TODO: change it to directly read from df
-    df = pd.read_csv(par['dir']+par['fname'])
+    # Form a single data frame by merging data and target
+    df_data = df[0]
+    df_target = df[1]
+    df = pd.concat([df_data, df_target], axis = 1)
+
     # find number of rows and columns
     num_col = len(df.columns)
     num_row = len(df.index)
