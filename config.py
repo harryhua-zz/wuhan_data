@@ -1,5 +1,5 @@
 #exec_seq = ['1a','3a']
-exec_seq = ['4b']
+exec_seq = ['4a','4b']
 
 pars = {'0a': None,
         '1a': {'dir': "../data/", 'fname': "train.csv.zip"},
@@ -30,7 +30,7 @@ df_in = {'0a': 'test_only_in1',
         '3b': ['train'],
         '3z': ['train','static','dynamic'],
         '4a': 'train_pool',
-        '4b': ['train_pool','selected_features'],
+        '4b': ['train_preprocessing','selected_features'],
         '5a': [],
         '6a': ['trainset', 'devset']
         }
@@ -54,9 +54,10 @@ df_out = {'0a': ['test_only_out1','test_only_out2'],
 # Names of datasets to be read from disk
 # Can be a string or a list of strings
 df_to_read = {'0a': ['test_only_in1','test_only_in2'],
-              '3z': ['static','train','dynamic'],
+              #'3b': 'train',
+              #'3z': ['static','train','dynamic'],
               '4a': ['train_pool'],
-              '4b': ['train_pool','selected_features'],
+              #'4b': ['train_preprocessing','selected_features'],
               '6a': ['trainset', 'devset']
                 }
 

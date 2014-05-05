@@ -110,17 +110,17 @@ def filterUnmatchedRecord(df, columns):
 	author: taku
 	Filter out the records that have unmatched customer characteristics (except for "time"
 	and "day") compared to the last record for each customer.
-	"""	
+	"""
 	df_benchmark = df.groupby(['customer_ID']).last()
 
 	record_num = len(df)
 	remove_list = []
 	for i in range(record_num):
 		customer_id = df.ix[i, 'customer_ID']
-		
+
 		if df.ix[i, 'record_type'] == 1: # if record_type=1 then skip
 			continue
-		
+
 		isMatch = True
 		for column in columns: #all customer characteristics except for "day" and "time"
 			if df.ix[i, column] != df_benchmark.ix[customer_id, column]:
@@ -128,10 +128,10 @@ def filterUnmatchedRecord(df, columns):
 					continue
 				isMatch = False
 				break
-				
+
 		if isMatch == False:
 			remove_list.append(i)
-				
+
 	df_filtered = df.drop(df.index[remove_list])
 	return df_filtered
 
@@ -232,11 +232,11 @@ def mergeOptionsCol(df):
     Merge A-G option columns into one new column.
     Return a new data frame with the new column
     """
-    merge_col = df['A']*10**6 + df['B']*10**5 + df['C']*10**4 + df['D']*10**3 + df['E']*10**2 + df['F']*10 + df['G']   
+    merge_col = df['A']*10**6 + df['B']*10**5 + df['C']*10**4 + df['D']*10**3 + df['E']*10**2 + df['F']*10 + df['G']
     merge_col_df = merge_col.to_frame(name = 'option_combine')
     #return pd.concat([df,merge_col_df],axis=1)
     return merge_col_df
-    
+
 def filterDuplicate(df):
     """
     Sandy:
@@ -244,7 +244,7 @@ def filterDuplicate(df):
     """
     t = df.loc[:, 'is_Duplicate']
     return df[t==0]
-    
+
 def handleMissing(df, missing_choice):
     """
     sandy: handle the missing value
@@ -252,22 +252,26 @@ def handleMissing(df, missing_choice):
     print(missing_choice)
 
     filtered_train = pd.DataFrame([])
-    if cmp(missing_choice, '1') == 0:
+    #if cmp(missing_choice, '1') == 0:
+    if missing_choice == '1':
         print('par_missing == 1')
         filtered_train = df.dropna(axis=0) # drop rows with NA
-    elif cmp(missing_choice, '2') == 0:
+    #elif cmp(missing_choice, '2') == 0:
+    elif missing_choice == '2':
         filtered_train = df.dropna(axis=1) # drop columns with NA
-    elif cmp(missing_choice, '3') == 0:
+    #elif cmp(missing_choice, '3') == 0:
+    elif missing_choice == '3':
         filtered_train = df.fillna(value = 0) # fill missing value with 0 (this execution is not work now)
-    elif cmp(missing_choice, '4') == 0:
+    #elif cmp(missing_choice, '4') == 0:
+    elif missing_choice == '4':
         filtered_train = df.fillna(df.mean())     # fill missing value with mean
-    
+
     return filtered_train
-    
+
 def Normalize(df):
     """
     normalize the data
     """
     filtered_train_norm = (df - df.mean()) / (df.max() - df.min())
     return filtered_train_norm
-       
+
