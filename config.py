@@ -11,7 +11,7 @@ pars = {'0a': None,
         '3a': {'condprob':(('A','B','C','D','E','F'),('day','state','group_size','homeowner','car_value','risk_factor','married_couple','C_previous','duration_previous'))},
         #'3a': {'condprob':(('A','B'),('day','state'))} # for debugging only
         '4a': {'C': '0.01', 'penalty': 'l1', 'dual': 'False'},
-        '5a': {'train_ratio': 0.7, 'seed': '1000', 'dir': 'data/', 'fname': 'train_5sandy_test_100.csv'},
+        '5a': {'train_ratio': 0.7, 'seed': '1000', 'dir': 'data/', 'fname': 'train_5sandy_all.csv'},
         '6a': None
         }
 

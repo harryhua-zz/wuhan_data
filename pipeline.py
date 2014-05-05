@@ -4,6 +4,7 @@ from utils import *
 # import configuration file and figure out what to run
 from config import *
 import random
+import datetime
 
 
 def test_only_0a(df,par):
@@ -213,11 +214,14 @@ def model_train_dev_svm(df, par):
     test_label = devset.iloc[:,num_col-1].values
     
     #print(train_feature, train_label, test_feature, test_label)
-    print('train/test features and targets extracted')
+    print('%s train/test features and targets extracted' % datetime.datetime.now())
     
     # start to train
     svm_model = svm_train(train_feature, train_label)
+    print('%s training completed' % datetime.datetime.now())
+    
     svm_test(svm_model, test_feature, test_label, devset, False)
+    print('%s development testing completed' % datetime.datetime.now())
     
     return []
 
