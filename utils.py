@@ -249,7 +249,7 @@ def handleMissing(df, missing_choice):
     """
     sandy: handle the missing value
     """
-    print(missing_choice)
+    #print(missing_choice)
 
     filtered_train = pd.DataFrame([])
     #if cmp(missing_choice, '1') == 0:

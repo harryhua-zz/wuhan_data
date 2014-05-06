@@ -120,6 +120,7 @@ def create_static_features_3a(df, par):
 def create_dynamic_features_3b(df,par):
     input_features = df[0]
     #helper_features = df[1]
+    duplicate_method = par['method_duplicate']
     merge_col_option = mergeOptionsCol(input_features)
     df_mergeOption = pd.concat([input_features,merge_col_option],axis=1)
     df_small = df_mergeOption.loc[:,['customer_ID','option_combine','record_type']]
@@ -156,12 +157,17 @@ def create_dynamic_features_3b(df,par):
         # iterate all rows for current customer from backward
         while (k>=i):
             option_value = df_small.loc[k,'option_combine']
+            record_type = df_small.loc[k,'record_type']
             # compute the value for column of "is_Duplicate"
             if (option_value in option_set):
                 isDuplicate.insert(i,1)
             else:
                 isDuplicate.insert(i,0)
-                option_set.add(option_value)
+                if (duplicate_method == 1):     #only label the duplicate in row with record_type ==0
+                    if (record_type == 0):
+                        option_set.add(option_value)
+                else:
+                    option_set.add(option_value)
             # count the frequency for each option_combine
             if (option_value in option_dict):
                 option_dict[option_value] += 1
@@ -190,26 +196,33 @@ def create_dynamic_features_3b(df,par):
     quote_percent_df = pd.DataFrame(quote_percent,index = list(range(rowindex)),columns=['quote_Percent'])
     dynamic_features = pd.concat([isDuplicate_df,isLastQuote_df, quote_frequency_df, quote_percent_df], axis =1)
     return dynamic_features
+   
 
 def merge_datasets_3z(df, par):
     origin_train = df[0]
     static_dataset = df[1]
     dynamic_dataset = df[2]
+    handle_duplicate = par['handle_duplicate']
     print(len(origin_train))
-    train_select = origin_train.loc[:,['A','B','C','D','E','F','G','record_type']]
+    train_select = origin_train.loc[:,['customer_ID','A','B','C','D','E','F','G','record_type']]
     train_pool_full = pd.concat([static_dataset,dynamic_dataset, train_select], axis = 1)
-    dataset_nonduplicate = filterDuplicate(train_pool_full)
-    train_target = pd.DataFrame(dataset_nonduplicate.loc[:,['A','B','C','D','E','F','G','is_LastQuote','record_type']], columns = ['A','B','C','D','E','F','G','is_LastQuote','record_type'])
+    dataset_update = train_pool_full    
+    if (handle_duplicate == 1):
+        dataset_update = filterDuplicate(train_pool_full)
+    train_target = pd.DataFrame(dataset_update.loc[:,'record_type'], columns = ['record_type'])
     print(len(train_target))
-    train_pool = dataset_nonduplicate.drop(['record_type','is_Duplicate','is_LastQuote','A','B','C','D','E','F','G'],axis=1)
-    print(len(train_pool))
-    return [train_pool, train_target]
+    customer_ID = pd.DataFrame(dataset_update.loc[:,'customer_ID'], columns = ['customer_ID'])
+    train_pool = dataset_update.drop(['record_type','customer_ID','is_Duplicate'],axis=1)
+    return [train_pool, train_target, customer_ID]
 
 #sandy: data preprocessing
 def preprocess_train_4a(df, par):
-    dataset_nomissing = handleMissing (df, par['missing'])
+    df_keep = df.loc[:,['A','B','C','D','E','F','G','is_LastQuote']]
+    df_preprocess = df.drop(['A','B','C','D','E','F','G','is_LastQuote'], axis=1)
+    dataset_nomissing = handleMissing (df_preprocess, par['missing'])
     dataset_norm = Normalize(dataset_nomissing)
-    return dataset_norm
+    data_preprocess = pd.concat([df_keep,dataset_norm], axis = 1)
+    return data_preprocess
 
 #taku: feature selection
 def feature_selection_4b(df, par):

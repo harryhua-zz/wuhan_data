@@ -1,5 +1,5 @@
 #exec_seq = ['1a','3a']
-exec_seq = ['4b']
+exec_seq = ['3z','4a']
 
 pars = {'0a': None,
         '1a': {'dir': "../data/", 'fname': "train.csv.zip"},
@@ -10,9 +10,9 @@ pars = {'0a': None,
         '2fy2': None,
         '3a': {'condprob':(('A','B','C','D','E','F'),('day','state','group_size','homeowner','car_value','risk_factor','married_couple','C_previous','duration_previous','r_hour','r_location','r_car_age','r_age_oldest','r_age_youngest','r_cost'))},
         #'3a': {'condprob':(('A','B'),('day','r_hour'))}, # for debugging only
-        '3b': None,
+        '3b': {'method_duplicate': 1}, # 0 presents original, 1 presents only handle record_type==0
         #'3z': 0, # 0 presents for train, 1 presents for test
-        '3z': None,
+        '3z': {'handle_duplicate': 1}, # 1 presents do, 0 presents do not
         '4a': {'missing': '4'},
         '4b': {'C' : 0.01, 'penalty' : 'l1', 'dual' : False, 'isTest': False},
         '5a': {'train_ratio': 0.7, 'seed': '1000', 'dir': 'data/', 'fname': 'train_5sandy_test_100.csv'},
@@ -44,7 +44,7 @@ df_out = {'0a': ['test_only_out1','test_only_out2'],
         '2fy2': None,
         '3a': ['static'],
         '3b': 'dynamic',
-        '3z': ['train_pool','train_target'],
+        '3z': ['train_pool','train_target','customer_ID'],
         '4a': 'train_preprocessing',
         '4b': ['train_ready','selected_features'],
         '5a': ['trainset', 'devset'],
@@ -54,9 +54,9 @@ df_out = {'0a': ['test_only_out1','test_only_out2'],
 # Names of datasets to be read from disk
 # Can be a string or a list of strings
 df_to_read = {'0a': ['test_only_in1','test_only_in2'],
-              #'3b': 'train',
+              '3b': 'train',
               '3z': ['static','train','dynamic'],
-              #'4a': ['train_pool'],
+              '4a': ['train_pool'],
               '4b': ['train_preprocessing','train_target'],
               '5a': ['train_ready', 'train_target'],
               '6a': ['trainset', 'devset']
@@ -69,7 +69,7 @@ df_to_write = {'0a': ['test_only_out1','test_only_out2'],
                '2b': 'train',
                '3a': 'static',
                '3b': 'dynamic',
-               '3z': ['train_pool','train_target'],
+               '3z': ['train_pool','train_target','customer_ID'],
                '4a': 'train_preprocessing',
                '4b': ['train_ready','selected_features'],
                '5a': ['trainset', 'devset']
