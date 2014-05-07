@@ -204,7 +204,8 @@ def merge_datasets_3z(df, par):
     dynamic_dataset = df[2]
     handle_duplicate = par['handle_duplicate']
     print(len(origin_train))
-    train_select = origin_train.loc[:,['customer_ID','A','B','C','D','E','F','G','record_type']]
+    #train_select = origin_train.loc[:,['customer_ID','A','B','C','D','E','F','G','record_type']]
+    train_select = origin_train.drop(['time','state','location'],axis=1)  # can config this to filter the columns from the original trainset  
     train_pool_full = pd.concat([static_dataset,dynamic_dataset, train_select], axis = 1)
     dataset_update = train_pool_full    
     if (handle_duplicate == 1):

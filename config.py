@@ -1,5 +1,5 @@
 #exec_seq = ['1a','3a']
-exec_seq = ['3z','4a']
+exec_seq = ['3z']
 
 pars = {'0a': None,
         '1a': {'dir': "../data/", 'fname': "train.csv.zip"},
