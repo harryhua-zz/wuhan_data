@@ -1,29 +1,73 @@
+/*******************************************************
+**     NAMETAG = 'trainset' or 'devset0' or 'test'    **
+*******************************************************/
+
 step 1: 
-    a: read original data set train.csv                             -- output datasets['train']
-    b: read original data set test.csv                              -- output datasets['test']
+    a: read original data set train.csv                                 -- output datasets['train']
+
+    b: read original data set test.csv                                  -- output datasets['test']
+    
+    z: split train.csv into trainset/devset0/devset1 (train:dev=7:3)    -- input datasets['train']
+                                                                        -- output datasets['trainset','devset0','devset1'] 
+
 step 2:
-    a: filter customers with changed characteristics                -- input datasets['train'/'test'], output datasets['train']
-    b: discretize/recode some original features                     -- input datasets['train'/'test'], output datasets['train']
+    a: filter customers with changed characteristics                    -- input datasets[NAMETAG]
+                                                                        -- output datasets[NAMETAG]
+
+    b: discretize/recode some original features                         -- input datasets[NAMETAG,'trainset']
+                                                                        -- output datasets[NAMETAG]
+                                                                        -- to_csv(NAMETAG+'.csv')
+
 step 3:
-    a: create static features                                       -- input datasets['train'/'test'], output datasets['static'], to_csv('static.csv')
-    b: create dynamic features                                      -- input datasets['train'/'test'], output datasets['dynamic'], to_csv('dynamic.csv')
-    z: merge datasets, discard columns, split features/target       -- input datasets['train'/'test','static','dynamic'], output datasets['train_pool','train_target’,’customer_ID’], to_csv('train_pool.csv','train_target.csv’,’customer_ID.csv’) 
+    a: create static features                                           -- input datasets[NAMETAG,'trainset']
+                                                                        -- output datasets[NAMETAG+'_static'] 
+                                                                        -- to_csv(NAMETAG+'_static.csv')
+
+    b: create dynamic features                                          -- input datasets[NAMETAG] 
+                                                                        -- output datasets[NAMETAG+'_dynamic'] 
+                                                                        -- to_csv(NAMETAG+'_dynamic.csv')
+                                                                        
+    z: merge datasets, drop columns, dedup, split ID/features/target    -- input datasets[NAMETAG,NAMETAG+'_static',NAMETAG+'_dynamic'] 
+                                                                        -- output datasets[NAMETAG+'_pool',NAMETAG+'_target',NAMETAG+'_customer_ID'] 
+                                                                        -- to_csv(NAMETAG+'_pool.csv',NAMETAG+'_target.csv',NAMETAG+'_customer_ID.csv')
+
 step 4:
-    a: preprocess train/test pool, handle missing, normalization    -- input datasets['train_pool'], output datasets['train_preprocessing]
-    b: feature selection                                            -- input datasets['train_preprocessing','selected_features','train_target'], output datasets['train_ready','selected_features'], to_csv('train_ready.csv','selected_features.csv')
+    a: preprocess train/test pool, handle missing, normalization        -- input datasets[NAMETAG+'_pool','trainset' or 'dataset_w_mean_normalization_par_of_trainset'] 
+                                                                        -- output datasets[NAMETAG+'_preprocessing']
+                                                                        -- to_csv(NAMETAG+'_preprocessing.csv')
+                                                                        
+    b: feature selection                                                -- input datasets[NAMETAG+'_preprocessing','selected_features',NAMETAG+'_target'] 
+                                                                        -- output datasets[NAMETAG+'_ready','selected_features'] 
+                                                                        -- to_csv(NAMETAG+'_ready.csv','selected_features.csv')
+
 step 5:
-    a: split into train/development (7:3) datasets                  -- input datasets['train_ready','train_target'], output datasets['trainset','devset'], to_csv('trainset.csv','devset.csv')
+
+
 step 6:
-    a: svm model training and development desting                   -- input datasets['trainset','devset']
+    a: svm model training and development desting                       -- input datasets['trainset_ready','devset0_ready','devset1']
+
 step 7:
-    a: 
+    a: post-training analysis (pull out missed cases) 
 
+    b: benchmark
 
+step 8:
+    a: make predictions for test.csv.zip
 
-Note:
+=========================================================================================================================================================================
+There are 3 exec_seq:
+    - trainset: ['1a','1z','2a','2b'train,'3a'train,'3b','3z','4a'train,'4b'train,'6a']
+    - devset:   ['1a','1z','2a','2b'test,'3a'test,'3b','3z','4a'test,'4b'test,'6a']
+    - test:     ['1b','2a','2b'test,'3a'test,'3b','3z','4a'test,'4b'test,'8a']
+
+!!! Note that we should process devset/test exactly the same way as we process trainset, which means:
+    - Some feature generation requires hash table lookup; these hash tables should be based on information from trainset.
+    - When we recode/fillna/normalize features, the cutoffs/mean/min/max etc. should be based on information from trainset.
+    - Feature selection is only done on trainset. The same set of features should be kept for devset/test.  
+    - Some functions should be executed in 2 modes: train or test. They include 2b,3a,4a,4b for now. We may add more to this list.
+
+=========================================================================================================================================================================
+Data Location:
     - All .csv files are to be uploaded to Dropbox: team_share/data/
 
-harry: work on 5a, evaluation, parameter tuning
-sandy: work on 3z, 4a, generate dynamic.csv
-taku: work 2a, 4b, other models
-lawrence: refactor pipeline.py, generate train.csv/static.csv, other models
+
