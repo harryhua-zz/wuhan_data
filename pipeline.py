@@ -328,6 +328,23 @@ def model_train_dev_svm(df, par):
 
     return []
 
+def last_quoted_plan_benchmark_7b(df, par):
+    numCorrect,numCustomers = 0,0
+    for i in range(len(df)):
+        if df.ix[i,'record_type'] == 1:
+            isCorrect = True
+            for opt in ['A','B','C','D','E','F','G']:
+                isCorrect = isCorrect and df.ix[i-1,opt]==df.ix[i,opt]
+            if isCorrect:
+                numCorrect = numCorrect + 1
+            numCustomers = numCustomers + 1
+    print('#################')
+    print('Last Quoted Plan Benchmark:')
+    print('number of mis-predictions: {}, number of test cases(customers): {}, error rate {}, prediction rate {}'\
+            .format(numCustomers-numCorrect, numCustomers, 1-numCorrect/numCustomers, numCorrect/numCustomers) )
+    print('#################')
+    return None
+
 def main():
     # The following lines do not need tuning in most cases
     steps = {'0a': test_only_0a,
@@ -343,7 +360,8 @@ def main():
             '4a': preprocess_train_4a,
             '4b': feature_selection_4b,
             '5a': split_data_5a,
-            '6a': model_train_dev_svm
+            '6a': model_train_dev_svm,
+            '7b': last_quoted_plan_benchmark_7b
             }
 
     datasets = {None: None}

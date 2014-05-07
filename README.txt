@@ -15,7 +15,8 @@ step 5:
     a: split into train/development (7:3) datasets                  -- input datasets['train_ready','train_target'], output datasets['trainset','devset'], to_csv('trainset.csv','devset.csv')
 step 6:
     a: svm model training and development desting                   -- input datasets['trainset','devset']
-
+step 7:
+    a: 
 
 
 
