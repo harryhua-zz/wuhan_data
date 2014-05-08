@@ -15,7 +15,7 @@ pars = {'0a': None,
                 'risk_factor','married_couple','C_previous','duration_previous','r_hour','r_location',\
                 'r_car_age','r_age_oldest','r_age_youngest','r_cost'))},
         #'3a': {'condprob':(('A','B'),('day','r_hour'))}, # for debugging only
-        '3b': {'method_duplicate': 1}, # 0 presents original, 1 presents only handle record_type==0
+        '3b': {'method_duplicate': 0}, # 0 presents original, 1 presents only handle record_type==0
         #'3z': 0, # 0 presents for train, 1 presents for test
         '3z': {'handle_duplicate': 1}, # 1 presents do, 0 presents do not
         '4a': {'missing': '4'},
