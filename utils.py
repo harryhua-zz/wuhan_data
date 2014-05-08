@@ -106,34 +106,35 @@ def discretize(v,nbins,method="linspace"):
         return None
 
 def filterUnmatchedRecord(df, columns):
-	"""
-	author: taku
-	Filter out the records that have unmatched customer characteristics (except for "time"
-	and "day") compared to the last record for each customer.
-	"""
-	df_benchmark = df.groupby(['customer_ID']).last()
+    """
+    author: taku
+    Filter out the records that have unmatched customer characteristics (except for "time"
+    and "day") compared to the last record for each customer.
+    """
+    df_benchmark = df.groupby(['customer_ID']).last()
 
-	record_num = len(df)
-	remove_list = []
-	for i in range(record_num):
-		customer_id = df.ix[i, 'customer_ID']
+    record_num = len(df)
+    remove_list = []
+    for i in range(record_num):
+        customer_id = df.ix[i, 'customer_ID']
 
-		if df.ix[i, 'record_type'] == 1: # if record_type=1 then skip
-			continue
+        if df.ix[i, 'record_type'] == 1: # if record_type=1 then skip
+            continue
 
-		isMatch = True
-		for column in columns: #all customer characteristics except for "day" and "time"
-			if df.ix[i, column] != df_benchmark.ix[customer_id, column]:
-				if pd.isnull(df.ix[i, column]) and pd.isnull(df_benchmark.ix[customer_id, column]):
-					continue
-				isMatch = False
-				break
+        isMatch = True
+        for column in columns: #all customer characteristics except for "day" and "time"
+            print(column)
+            if df.ix[i, column] != df_benchmark.ix[customer_id, column]:
+                if pd.isnull(df.ix[i, column]) and pd.isnull(df_benchmark.ix[customer_id, column]):
+                    continue
+                isMatch = False
+                break
 
-		if isMatch == False:
-			remove_list.append(i)
+        if isMatch == False:
+            remove_list.append(i)
 
-	df_filtered = df.drop(df.index[remove_list])
-	return df_filtered
+    df_filtered = df.drop(df.index[remove_list])
+    return df_filtered
 
 # This method trains an SVM model given the features, labels and parameter sets
 # it returns the model object

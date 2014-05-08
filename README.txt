@@ -9,6 +9,7 @@ step 1:
     
     z: split train.csv into trainset/devset0/devset1 (train:dev=7:3)    -- input datasets['train']
                                                                         -- output datasets['trainset','devset0','devset1'] 
+                                                                        -- to_csv('trainset','devset0','devset1')
 
 step 2:
     a: filter customers with changed characteristics                    -- input datasets[NAMETAG]
@@ -44,7 +45,7 @@ step 5:
 
 
 step 6:
-    a: svm model training and development desting                       -- input datasets['trainset_ready','devset0_ready','devset1']
+    a: svm model training and development desting                       -- input datasets['trainset_ready','devset0_ready','devset0_customer_ID','devset1']
 
 step 7:
     a: post-training analysis (pull out missed cases) 
