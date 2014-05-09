@@ -45,15 +45,14 @@ step 5:
 
 
 step 6:
-    a: svm model training and development desting                       -- input datasets['trainset_ready','devset0_ready','devset0_customer_ID','devset1']
-
+    a: svm model training                                               -- input datasets['trainset_ready']
+    b: svm model development/final testing                              -- input datasets[('devset0_ready','devset0_customer_ID', 'devset1')
+                                                                                            or ('test_ready','test_customer_ID')]
+    
 step 7:
     a: post-training analysis (pull out missed cases) 
 
     b: benchmark
-
-step 8:
-    a: make predictions for test.csv.zip
 
 =========================================================================================================================================================================
 There are 3 exec_seq:
