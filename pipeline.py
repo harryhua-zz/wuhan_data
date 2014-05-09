@@ -391,39 +391,7 @@ def model_test_svm_6b(df, par):
         pass
     
     return [predict_options_df]
-    
-# This method runs the SVM train model over the trainset.csv and
-# evaluate its performance over the devset.csv
-# input: trainset.csv, devset.csv, model parameters
-# output: logging error rate per parameter combination
-def model_train_dev_svm(df, par):
 
-    # get the trainset and devset
-    trainset = df[0]
-    devset = df[1]
-
-    # find number of rows and columns
-    num_col = len(trainset.columns)
-    num_row = len(trainset.index)
-
-    # get the features and labels
-    train_feature = trainset.iloc[:, 0:(num_col-1)].values
-    train_label = trainset.iloc[:,num_col-1].values
-
-    test_feature = devset.iloc[:, 0:(num_col-1)].values
-    test_label = devset.iloc[:,num_col-1].values
-
-    #print(train_feature, train_label, test_feature, test_label)
-    print('%s train/test features and targets extracted' % datetime.datetime.now())
-
-    # start to train
-    svm_model = svm_train(train_feature, train_label)
-    print('%s training completed' % datetime.datetime.now())
-
-    svm_test(svm_model, test_feature, test_label, devset, False)
-    print('%s development testing completed' % datetime.datetime.now())
-
-    return []
 
 def main():
     # The following lines do not need tuning in most cases
