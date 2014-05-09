@@ -144,6 +144,76 @@ def svm_train(train_feature, train_label, params=None):
 
     return clf
 
+# this method generate the confidence of each test row:
+# input: customerid, test features, confidence list
+# output: <customer_ID, plan>
+#   customer_IDs should be unique
+#   plan is the predicted option combination for this customer
+def confidence_evaluate(customerid, features, confidence):
+    
+    # safety check
+    num_row = len(customerid)
+    assert num_row == len(confidence)
+    assert num_row == len(features.index)
+    assert num_row > 0
+    print(num_row, len(confidence), len(features.index))
+    print(confidence)
+    print(customerid)
+    
+    # create the predict options
+    predict_options_df = {}
+    customerid_list = []
+    options_list= []
+    
+    prev_customerid = customerid.ix[0, 'customer_ID']
+    customerid_list.append(prev_customerid)
+    max_confidence = -1
+    max_confidence_idx = -1
+    num_customer = 1
+    n = 0
+    while True:
+        #print('prev_customer_id: %s' % prev_customerid)
+        store_options = False
+        if n >= num_row:
+            store_options = True
+        else:
+            cur_customerid = customerid.ix[n, 'customer_ID']
+            conf = confidence[n][1]
+            if cur_customerid == prev_customerid:
+                # still the same customer ID, update confidence
+                if conf > max_confidence:
+                    print(n, conf, max_confidence, max_confidence_idx)
+                    max_confidence = conf
+                    max_confidence_idx = n
+            else:
+                num_customer += 1
+                customerid_list.append(cur_customerid)
+                prev_customerid = cur_customerid
+                store_options = True
+        if store_options:
+            idx = max_confidence_idx
+            predict_options = str(features.ix[idx,'A']) + str(features.ix[idx,'B']) + str(features.ix[idx,'C']) + \
+                             str(features.ix[idx,'D']) + str(features.ix[idx,'E']) + str(features.ix[idx,'F']) + \
+                             str(features.ix[idx,'G'])
+            print('idx: %d, n: %d' % (idx+2, n))
+            print(predict_options)
+            options_list.append(predict_options)
+            if n >= num_row:
+                break
+            else:
+                max_confidence = conf
+                max_confidence_idx = n
+        n += 1
+    
+    # write into the data frame
+    print(customerid_list)
+    print(predict_options)
+    predict_options_df['cusotmer_ID'] = customerid_list
+    predict_options_df['plan'] = options_list
+    df = pd.DataFrame(predict_options_df)
+    
+    return df
+
 # This method test the model performance
 # if 'naive' is turned on, it simply gives the error rate per row
 # otherwise, it evaluates the final error rate of option combinations
@@ -192,14 +262,16 @@ def svm_test(clf, test_feature, test_label, testset, naive=True):
                     max_confidence = -1
                     max_confidence_idx= n
                     new_customer_flag = False
+                
+                if not (test_label[n] == 1):
+                
+                    confidence = result[n][1]
+                    #print(confidence)
+                    if confidence > max_confidence:
+                        max_confidence = confidence
+                        max_confidence_idx = n
 
-                confidence = result[n][1]
-                #print(confidence)
-                if confidence > max_confidence:
-                    max_confidence = confidence
-                    max_confidence_idx = n
-
-                if test_label[n] == 1:
+                else:
                     new_customer_flag = True
                     #print('max_confidence: %f, index %d' % (max_confidence, max_confidence_idx))
 
@@ -225,6 +297,7 @@ def svm_test(clf, test_feature, test_label, testset, naive=True):
 
     else:
         print('empty test set, ignore')
+
 
 def mergeOptionsCol(df):
     """

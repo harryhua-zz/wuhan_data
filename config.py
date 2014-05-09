@@ -1,5 +1,5 @@
 #exec_seq = ['1a','3a']
-exec_seq = ['3z','4a']
+exec_seq = ['6a','6b']
 
 pars = {'0a': None,
         '1a': {'dir': "../data/", 'fname': "train.csv.zip"},
@@ -16,7 +16,8 @@ pars = {'0a': None,
         '4a': {'missing': '4'},
         '4b': {'C' : 0.01, 'penalty' : 'l1', 'dual' : False, 'isTest': False},
         '5a': {'train_ratio': 0.7, 'seed': '1000', 'dir': 'data/', 'fname': 'train_5sandy_test_100.csv'},
-        '6a': None
+        '6a': None,
+        '6b': {'mode': 'dev'}
         }
 
 df_in = {'0a': 'test_only_in1',
@@ -32,7 +33,8 @@ df_in = {'0a': 'test_only_in1',
         '4a': 'train_pool',
         '4b': ['train_preprocessing','selected_features','train_target'],
         '5a': ['train_ready', 'train_target'],
-        '6a': ['trainset', 'devset']
+        '6a': ['trainset_tmp'],
+        '6b': ['devset0_tmp', 'devset0_customer_ID_tmp', 'devset1_tmp']
         }
 
 df_out = {'0a': ['test_only_out1','test_only_out2'],
@@ -48,7 +50,9 @@ df_out = {'0a': ['test_only_out1','test_only_out2'],
         '4a': 'train_preprocessing',
         '4b': ['train_ready','selected_features'],
         '5a': ['trainset', 'devset'],
-        '6a': []
+        '6a': [],
+        '6a': [],
+        '6b': ['predict_options']
         }
 
 # Names of datasets to be read from disk
@@ -59,7 +63,8 @@ df_to_read = {'0a': ['test_only_in1','test_only_in2'],
               '4a': ['train_pool'],
               '4b': ['train_preprocessing','train_target'],
               '5a': ['train_ready', 'train_target'],
-              '6a': ['trainset', 'devset']
+              '6a': ['trainset_tmp'],
+              '6b': ['devset0_tmp', 'devset0_customer_ID_tmp', 'devset1_tmp']
                 }
 
 # Names of datasets to be written to disk
@@ -72,5 +77,6 @@ df_to_write = {'0a': ['test_only_out1','test_only_out2'],
                '3z': ['train_pool','train_target','customer_ID'],
                '4a': 'train_preprocessing',
                '4b': ['train_ready','selected_features'],
-               '5a': ['trainset', 'devset']
+               '5a': ['trainset', 'devset'],
+               '6b': ['predict_options']
                 }
