@@ -181,57 +181,57 @@ def create_dynamic_features_3b(df,par):
     rowindex = len(df_small)
     i = 0   # index of the start row of one customer
     j = 0   # index of the start row of next customer
-    while (j < rowindex):
-        current_customerID = df_small.loc[i,'customer_ID']
+    while j < rowindex:
+        current_customerID = df_small.ix[i,'customer_ID']
         # move j to the start row of next customer
-        while ((df_small.iloc[j,0] == current_customerID)):
+        while df_small.ix[j,'customer_ID'] == current_customerID:
             j +=1
             if j == rowindex:
                 break
 
         k = j - 1   # set k to the end row of current customer
         quote_count = j - i # the total number of quotes for current customer
-        if (quote_count < 1):
+        if quote_count < 1:
             print ("Error: number of quote history is less than 1")
         option_set = set()  # a set used to check the duplicate option_combine
         option_dict = {}    # a dictionary to record the frequency for each option_combine
         # last quote for current customer
-        if (df_small.loc[k, 'record_type'] == 0):
-            last_quote = df_small.loc[k,'option_combine']
-        elif (quote_count > 1):
-            last_quote = df_small.loc[k-1,'option_combine']
+        if df_small.ix[k, 'record_type'] == 0:
+            last_quote = df_small.ix[k,'option_combine']
+        elif quote_count > 1:
+            last_quote = df_small.ix[k-1,'option_combine']
         else:
             last_quote = -1     # no last quote for this customer
         # iterate all rows for current customer from backward
-        while (k>=i):
-            option_value = df_small.loc[k,'option_combine']
-            record_type = df_small.loc[k,'record_type']
+        while k>=i:
+            option_value = df_small.ix[k,'option_combine']
+            record_type = df_small.ix[k,'record_type']
             # compute the value for column of "is_Duplicate"
-            if (option_value in option_set):
+            if option_value in option_set:
                 isDuplicate.insert(i,1)
             else:
                 isDuplicate.insert(i,0)
-                if (duplicate_method == 1):     #only label the duplicate in row with record_type ==0
-                    if (record_type == 0):
+                if duplicate_method == 1:     #only label the duplicate in row with record_type ==0
+                    if record_type == 0:
                         option_set.add(option_value)
                 else:
                     option_set.add(option_value)
             # count the frequency for each option_combine
-            if (option_value in option_dict):
+            if option_value in option_dict:
                 option_dict[option_value] += 1
             else:
                 option_dict[option_value] = 1
             k -= 1
         # iterate all rows to set the value for column "is_LastQuote", "quote_Frequency" and "quote_Percent"
         t = i
-        while (t < j):
-            option = df_small.loc[t,'option_combine']
+        while t < j:
+            option = df_small.ix[t,'option_combine']
             frequency = option_dict[option]
             quote_frequency.append(frequency)
             #quote_percent.append(round(frequency*1.0/quote_count,2))
             quote_percent.append(frequency*1.0/quote_count)
             # compute the value for column of "is_LastQuote"
-            if (option == last_quote):
+            if option == last_quote:
                 isLastQuote.append(1)
             else:
                 isLastQuote.append(0)
@@ -268,7 +268,7 @@ def merge_datasets_3z(df, par):
 def preprocess_train_4a(df, par):
     df_keep = df.loc[:,['A','B','C','D','E','F','G','is_LastQuote']]
     df_preprocess = df.drop(['A','B','C','D','E','F','G','is_LastQuote'], axis=1)
-    dataset_nomissing = handleMissing (df_preprocess, par['missing'])
+    dataset_nomissing = handleMissing(df_preprocess, par['missing'])
     dataset_norm = Normalize(dataset_nomissing)
     data_preprocess = pd.concat([df_keep,dataset_norm], axis = 1)
     return data_preprocess
@@ -282,7 +282,7 @@ def feature_selection_4b(df, par):
     df_without_options = df_data.drop(['A', 'B', 'C', 'D', 'E', 'F', 'G'], axis = 1) #remove option combination from the data frame incase they will be removed by feature selection
 
     if par['isTest'] == False:
-        df_data_new = LinearSVC(C = par['C'], penalty = par['penalty'], dual = par['dual']).fit_transform(df_without_options.values, df_y.values)
+        df_data_new = LinearSVC(C = par['C'], penalty = par['penalty'], dual = par['dual']).fit_transform(df_without_options.values, np.ravel(df_y.values))
 
         #identify the selected features
         selected_features = []
@@ -313,9 +313,9 @@ def feature_selection_4b(df, par):
 
 
 def model_train_svm_6a(df, par):
-    
+
     trainset = df[0]
-    
+
     # find number of rows and columns
     num_col = len(trainset.columns)
     num_row = len(trainset.index)
@@ -333,13 +333,13 @@ def model_train_svm_6a(df, par):
     # start to train
     svm_model = svm_train(train_feature, train_label)
     print('%s training completed' % datetime.datetime.now())
-    
+
     models['svm'] = svm_model
-    
+
     return []
 
 def model_test_svm_6b(df, par):
-    
+
     svm_model = models['svm']
     testset = df[0]
     testset_customerid = df[1]
@@ -352,12 +352,12 @@ def model_test_svm_6b(df, par):
     # get the test features and labels
     test_feature = testset.iloc[:, 0:(num_col-1)].values
     #print(test_feature)
-    
+
     # generate the confidence level for each row
     predict_confidence = svm_model.predict_proba(test_feature)
     assert len(predict_confidence) == num_row
     #print(predict_confidence)
-    
+
     # generate the predicted options for each customer ID
     predict_options_df = confidence_evaluate(testset_customerid, testset, predict_confidence)
     print('%s confidence list generated' % datetime.datetime.now())
@@ -369,7 +369,7 @@ def model_test_svm_6b(df, par):
         num_row_predict_options = len(predict_options_df.index)
         print(num_row_devset1, num_row_predict_options)
         assert num_row_devset1 == num_row_predict_options
-        
+
         num_customer = num_row_devset1
         num_err = 0
         for n in range(num_customer):
@@ -381,18 +381,18 @@ def model_test_svm_6b(df, par):
             print(predict_options, label_options)
             if not (predict_options == label_options):
                 num_err += 1
-        
+
         error_rate = 1.0 * num_err / num_customer
         print('#################')
         print('Formal Evaluation:')
         print('number of mis-predictions: %d, number of test cases(customers): %d, error rate %f, prediction rate %f' \
               % (num_err, num_customer, error_rate, 1-error_rate) )
         print('#################')
-            
+
     elif par['mode'] is 'test':
         # output the final prediction report
         pass
-    
+
     return [predict_options_df]
 
 
