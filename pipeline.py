@@ -7,8 +7,13 @@ from utils import *
 from config import *
 import random
 import datetime
+import warnings
 
-models = dict()
+# Supress annoying pandas warnings
+warnings.simplefilter(action = 'ignore', category = DeprecationWarning)
+
+# common storage for working model objects
+models = {None: None}
 
 def test_only_0a(df,par):
 # testing multiple datasets I/O and .csv I/O
@@ -21,6 +26,48 @@ def read_train_data_1a(df, par):
 
 def read_test_data_1b(df, par):
     return readZipCSV(par['dir'], par['fname'])
+
+# This method splits 'train_ready' into train/development datasets and stores them
+# in files
+def split_data_1z(df, par):
+
+    # find number of rows and columns
+    num_col = len(df.columns)
+    num_row = len(df.index)
+    #print(num_col, num_row)
+
+    # read the train_ratio
+    # it is the ratio of trainset to the whole set
+    train_ratio= par['train_ratio']
+
+    # read the random seed
+    random.seed(par['seed'])
+
+    # split the data
+    # splitting is based on customer ID:
+    # train_ratio (e.g., 70%) of customers will be in trainset
+    new_customer_flag = True
+    train_flag = False
+    dev_arr = np.ones(num_row)
+    for r in range(num_row):
+        if new_customer_flag:
+            train_flag = (random.random() < train_ratio)
+            new_customer_flag = False
+        if train_flag:
+            dev_arr[r] = 0
+        # check the record type column to see whether it is
+        # a new customer ID
+        if df.ix[r,'record_type'] == 1:
+            new_customer_flag = True
+            dev_arr[r] = -dev_arr[r]
+    #print(dev_arr)
+
+    # split the data into trainset, devset0, and devset1
+    trainset = df.iloc[dev_arr==0,:]
+    devset0 = df.iloc[dev_arr==1,:]
+    devset1 = df.iloc[dev_arr==-1,:]
+
+    return [trainset, devset0, devset1]
 
 def summarize_data_2a(df, par):
     colNames = list(df.columns.values)
@@ -35,7 +82,7 @@ def summarize_data_2a(df, par):
     return None
 
 def filter_records_2a(df, par):
-    return filterUnmatchedRecord(df)
+    return filterUnmatchedRecord(df,par['columns'])
 
 def recode_features_2b(df, par):
     """
@@ -197,7 +244,7 @@ def create_dynamic_features_3b(df,par):
     quote_percent_df = pd.DataFrame(quote_percent,index = list(range(rowindex)),columns=['quote_Percent'])
     dynamic_features = pd.concat([isDuplicate_df,isLastQuote_df, quote_frequency_df, quote_percent_df], axis =1)
     return dynamic_features
-   
+
 
 def merge_datasets_3z(df, par):
     origin_train = df[0]
@@ -205,9 +252,10 @@ def merge_datasets_3z(df, par):
     dynamic_dataset = df[2]
     handle_duplicate = par['handle_duplicate']
     print(len(origin_train))
-    train_select = origin_train.loc[:,['customer_ID','A','B','C','D','E','F','G','record_type']]
+    #train_select = origin_train.loc[:,['customer_ID','A','B','C','D','E','F','G','record_type']]
+    train_select = origin_train.drop(['time','state','location'],axis=1)  # can config this to filter the columns from the original trainset
     train_pool_full = pd.concat([static_dataset,dynamic_dataset, train_select], axis = 1)
-    dataset_update = train_pool_full    
+    dataset_update = train_pool_full
     if (handle_duplicate == 1):
         dataset_update = filterDuplicate(train_pool_full)
     train_target = pd.DataFrame(dataset_update.loc[:,'record_type'], columns = ['record_type'])
@@ -263,51 +311,6 @@ def feature_selection_4b(df, par):
 
     return df_trainready
 
-# This method splits 'train_ready' into train/development datasets and stores them
-# in files
-def split_data_5a(df, par):
-
-    # Form a single data frame by merging data and target
-    df_data = df[0]
-    df_target = df[1]
-    df = pd.concat([df_data, df_target], axis = 1)
-
-    # find number of rows and columns
-    num_col = len(df.columns)
-    num_row = len(df.index)
-    print(num_col, num_row)
-
-    # read the train_ratio
-    # it is the ratio of trainset to the whole set
-    train_ratio= par['train_ratio']
-
-    # read the random seed
-    random.seed(par['seed'])
-
-    # split the data
-    # splitting is based on customer ID:
-    # train_ratio (e.g., 70%) of customers will be in trainset
-    new_customer_flag = True
-    train_flag = False
-    train_arr = np.zeros(num_row)
-    for r in range(num_row):
-        if new_customer_flag:
-            train_flag = (random.random() < train_ratio)
-            new_customer_flag = False
-        if train_flag:
-            train_arr[r] = 1
-        # check the record type column to see whether it is
-        # a new customer ID
-        if df.iloc[r,num_col-1] == 1:
-            new_customer_flag = True
-    print(train_arr)
-
-    # split the data into trainset and devset
-    # for now, labels are in the last column of trainset and devset
-    trainset = df.iloc[train_arr==1,:]
-    devset = df.iloc[train_arr==0,:]
-
-    return [trainset, devset]
 
 def model_train_svm_6a(df, par):
     
@@ -393,11 +396,29 @@ def model_test_svm_6b(df, par):
     return [predict_options_df]
 
 
+def last_quoted_plan_benchmark_7b(df, par):
+    numCorrect,numCustomers = 0,0
+    for i in range(len(df)):
+        if df.ix[i,'record_type'] == 1:
+            isCorrect = True
+            for opt in ['A','B','C','D','E','F','G']:
+                isCorrect = isCorrect and df.ix[i-1,opt]==df.ix[i,opt]
+            if isCorrect:
+                numCorrect = numCorrect + 1
+            numCustomers = numCustomers + 1
+    print('#################')
+    print('Last Quoted Plan Benchmark:')
+    print('number of mis-predictions: {}, number of test cases(customers): {}, error rate {}, prediction rate {}'\
+            .format(numCustomers-numCorrect, numCustomers, 1-numCorrect/numCustomers, numCorrect/numCustomers) )
+    print('#################')
+    return None
+
 def main():
     # The following lines do not need tuning in most cases
     steps = {'0a': test_only_0a,
             '1a': read_train_data_1a,
             '1b': read_test_data_1b,
+            '1z': split_data_1z,
             '2a': filter_records_2a,
             '2b': recode_features_2b,
             '2fy1': summarize_data_2a,
@@ -407,16 +428,18 @@ def main():
             '3z': merge_datasets_3z,
             '4a': preprocess_train_4a,
             '4b': feature_selection_4b,
-            '5a': split_data_5a,
             '6a': model_train_svm_6a,
-            '6b': model_test_svm_6b
+            '6b': model_test_svm_6b,
+            '7b': last_quoted_plan_benchmark_7b
             }
 
+    # common storage for intermediate pandas dataframes
     datasets = {None: None}
 
     for id in exec_seq:
         # read in dataframes from .csv files on disk as needed
-        print(id)
+        startTime = datetime.datetime.now()
+        print('Entering step {}'.format(id))
         if id in df_to_read:
             if isinstance(df_to_read[id],list):
                 for dfName in df_to_read[id]:
@@ -434,14 +457,17 @@ def main():
             datasets[df_out[id]] = steps[id](inputDataframes,pars[id])
         # write dataframes to .csv files on disk as needed
         if id in df_to_write:
-            print(id)
             if isinstance(df_to_write[id],list):
                 for dfName in df_to_write[id]:
-                    print(dfName)
                     datasets[dfName].to_csv('../data/'+dfName+'.csv',index=False,float_format='%.4f')
+                    print('datasets[{}] is written to disk.'.format(dfName))
             else:
-                print(df_to_write[id])
-                #datasets[df_to_write[id]].to_csv('data/'+df_to_write[id]+'.csv',index=False,float_format='%.4f')
                 datasets[df_to_write[id]].to_csv('../data/'+df_to_write[id]+'.csv',index=False,float_format='%.4f')
+                print('datasets[{}] is written to disk.'.format(df_to_write[id]))
+        timeElapsed = datetime.datetime.now() - startTime
+        hrs,secs = divmod(timeElapsed.days*86400+timeElapsed.seconds,3600)
+        mins,secs = divmod(secs,60)
+        print('Finished step {} -- {} hours {} minutes {} seconds elapsed.'.format(id,hrs,mins,secs))
+
 if __name__ == "__main__":
     main()
