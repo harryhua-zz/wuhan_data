@@ -22,7 +22,7 @@ pars = {'0a': None,
         '4b': {'C' : 0.01, 'penalty' : 'l1', 'dual' : False, 'isTest': True},
         '6a': {'model': 'random_forest'},
         '6b': {'mode': 'dev', 'model' : 'random_forest'},
-        '6z': {'model': 'random_forest', 'mode': 'dev'}
+        '6z': {'model': 'random_forest', 'mode': 'dev', 'random_forest': {'n_estimators': None}}
         }
 
 df_in = {'0a': 'test_only_in1',

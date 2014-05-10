@@ -189,6 +189,7 @@ def confidence_evaluate(customerid, features, confidence):
     options_list= []
 
     prev_customerid = customerid.ix[0, 'customer_ID']
+    #prev_customerid = customerid.iloc[0]['customer_ID']
     customerid_list.append(prev_customerid)
     max_confidence = -1
     max_confidence_idx = -1
@@ -201,6 +202,7 @@ def confidence_evaluate(customerid, features, confidence):
             store_options = True
         else:
             cur_customerid = customerid.ix[n, 'customer_ID']
+            #cur_customerid = customerid.iloc[n]['customer_ID']
             conf = confidence[n][1]
             if cur_customerid == prev_customerid:
                 # still the same customer ID, update confidence
@@ -215,10 +217,16 @@ def confidence_evaluate(customerid, features, confidence):
                 store_options = True
         if store_options:
             idx = max_confidence_idx
-            predict_options = str(features.ix[idx,'A']) + str(features.ix[idx,'B']) + str(features.ix[idx,'C']) + \
-                             str(features.ix[idx,'D']) + str(features.ix[idx,'E']) + str(features.ix[idx,'F']) + \
-                             str(features.ix[idx,'G'])
+            #predict_options = str(features.ix[idx,'A']) + str(features.ix[idx,'B']) + str(features.ix[idx,'C']) + \
+            #                 str(features.ix[idx,'D']) + str(features.ix[idx,'E']) + str(features.ix[idx,'F']) + \
+            #                 str(features.ix[idx,'G'])
+            predict_options = ""
+            for oi in ['A', 'B', 'C', 'D', 'E', 'F', 'G']:
+                #predict_options += str( int(features.iloc[idx][oi]) )
+                predict_options += str(features.ix[idx, oi])
+
             #print('idx: %d, n: %d' % (idx+2, n))
+            #print(str(features.ix[idx,'A']), str(int(features.iloc[idx]['A'])))
             #print(predict_options)
             options_list.append(predict_options)
             if n >= num_row:
@@ -286,4 +294,12 @@ def Normalize(df):
     """
     filtered_train_norm = (df - df.mean()) / (df.max() - df.min())
     return filtered_train_norm
+
+def floatrange(start, stop, step):
+    r = start
+    output = [r]
+    while r < stop - 1e-5:
+        r += step
+        output.append(r)
+    return output
 

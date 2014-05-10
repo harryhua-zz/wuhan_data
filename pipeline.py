@@ -375,9 +375,17 @@ def model_train_test_6z(df, par):
         for n in range(num_customer):
             idx = n
             predict_options = predict_options_df.ix[n, 'plan']
-            label_options = str(devset1.ix[idx,'A']) + str(devset1.ix[idx,'B']) + str(devset1.ix[idx,'C']) + \
-                             str(devset1.ix[idx,'D']) + str(devset1.ix[idx,'E']) + str(devset1.ix[idx,'F']) + \
-                             str(devset1.ix[idx,'G'])
+            #label_options = str(devset1.ix[idx,'A']) + str(devset1.ix[idx,'B']) + str(devset1.ix[idx,'C']) + \
+            #                 str(devset1.ix[idx,'D']) + str(devset1.ix[idx,'E']) + str(devset1.ix[idx,'F']) + \
+            #                 str(devset1.ix[idx,'G'])
+            #label_options = str(devset1.iloc[idx]['A']) + str(devset1.iloc[idx]['B']) + str(devset1.iloc[idx]['C']) + \
+            #     str(devset1.iloc[idx]['D']) + str(devset1.iloc[idx]['E']) + str(devset1.iloc[idx]['F']) + \
+            #     str(devset1.iloc[idx]['G'])
+            label_options = ""
+            for oi in ['A', 'B', 'C', 'D', 'E', 'F', 'G']:
+                #label_options += str( int(devset1.iloc[idx][oi]) )
+                label_options += str(devset1.ix[idx, oi])            
+
             #print(predict_options, label_options)
             if not (predict_options == label_options):
                 num_err += 1
@@ -393,6 +401,7 @@ def model_train_test_6z(df, par):
         # output the final prediction report
         pass
 
+    print(predict_options_df.dtypes)
     return [predict_options_df]    
     
 
@@ -466,9 +475,12 @@ def model_test_6b(df, par):
         for n in range(num_customer):
             idx = n
             predict_options = predict_options_df.ix[n, 'plan']
-            label_options = str(devset1.ix[idx,'A']) + str(devset1.ix[idx,'B']) + str(devset1.ix[idx,'C']) + \
-                             str(devset1.ix[idx,'D']) + str(devset1.ix[idx,'E']) + str(devset1.ix[idx,'F']) + \
-                             str(devset1.ix[idx,'G'])
+            #label_options = str(devset1.ix[idx,'A']) + str(devset1.ix[idx,'B']) + str(devset1.ix[idx,'C']) + \
+            #                 str(devset1.ix[idx,'D']) + str(devset1.ix[idx,'E']) + str(devset1.ix[idx,'F']) + \
+            #                 str(devset1.ix[idx,'G'])
+            label_options = str(devset1.iloc[idx]['A']) + str(devset1.iloc[idx]['B']) + str(devset1.iloc[idx]['C']) + \
+                             str(devset1.iloc[idx]['D']) + str(devset1.iloc[idx]['E']) + str(devset1.iloc[idx]['F']) + \
+                             str(devset1.iloc[idx]['G'])
             #print(predict_options, label_options)
             if not (predict_options == label_options):
                 num_err += 1
@@ -483,7 +495,7 @@ def model_test_6b(df, par):
     elif par['mode'] is 'test':
         # output the final prediction report
         pass
-
+    
     return [predict_options_df]
 
 
