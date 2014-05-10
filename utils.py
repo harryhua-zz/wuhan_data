@@ -4,6 +4,7 @@ import zipfile
 import numpy as np
 import pandas as pd
 from sklearn import svm
+from sklearn import ensemble
 
 NUM_ONES_COL = 'num_ones'
 NUM_ALL_COL  = 'num_all'
@@ -141,7 +142,16 @@ def filterUnmatchedRecord(df, columns):
 # it returns the model object
 def svm_train(train_feature, train_label, params=None):
 
-    clf = svm.SVC(probability=True, verbose=True, max_iter=100000, kernel='linear')
+    clf = svm.SVC(probability=True, verbose=True, max_iter=1, kernel='linear')
+    clf.fit(train_feature, train_label)
+
+    return clf
+
+# This method trains an Random Forest model given the features, labels and parameter sets
+# it returns the model object
+def random_forest_train(train_feature, train_label, params=None):
+
+    clf = ensemble.RandomForestClassifier(n_estimators=10, criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, max_features='auto', bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=1, min_density=None, compute_importances=None)
     clf.fit(train_feature, train_label)
 
     return clf
@@ -159,8 +169,8 @@ def confidence_evaluate(customerid, features, confidence):
     assert num_row == len(features.index)
     assert num_row > 0
     print(num_row, len(confidence), len(features.index))
-    print(confidence)
-    print(customerid)
+    #print(confidence)
+    #print(customerid)
 
     # create the predict options
     predict_options_df = {}
@@ -184,7 +194,7 @@ def confidence_evaluate(customerid, features, confidence):
             if cur_customerid == prev_customerid:
                 # still the same customer ID, update confidence
                 if conf > max_confidence:
-                    print(n, conf, max_confidence, max_confidence_idx)
+                    #print(n, conf, max_confidence, max_confidence_idx)
                     max_confidence = conf
                     max_confidence_idx = n
             else:
@@ -197,8 +207,8 @@ def confidence_evaluate(customerid, features, confidence):
             predict_options = str(features.ix[idx,'A']) + str(features.ix[idx,'B']) + str(features.ix[idx,'C']) + \
                              str(features.ix[idx,'D']) + str(features.ix[idx,'E']) + str(features.ix[idx,'F']) + \
                              str(features.ix[idx,'G'])
-            print('idx: %d, n: %d' % (idx+2, n))
-            print(predict_options)
+            #print('idx: %d, n: %d' % (idx+2, n))
+            #print(predict_options)
             options_list.append(predict_options)
             if n >= num_row:
                 break
@@ -208,8 +218,8 @@ def confidence_evaluate(customerid, features, confidence):
         n += 1
 
     # write into the data frame
-    print(customerid_list)
-    print(predict_options)
+    #print(customerid_list)
+    #print(predict_options)
     predict_options_df['cusotmer_ID'] = customerid_list
     predict_options_df['plan'] = options_list
     df = pd.DataFrame(predict_options_df)

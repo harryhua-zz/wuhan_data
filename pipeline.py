@@ -2,6 +2,7 @@ import sys
 from sklearn import preprocessing # add by sandy
 from sklearn import svm
 from sklearn.svm import LinearSVC
+from sklearn import ensemble
 from utils import *
 # import configuration file and figure out what to run
 from config import *
@@ -314,9 +315,10 @@ def feature_selection_4b(df, par):
     return df_trainready
 
 
-def model_train_svm_6a(df, par):
+def model_train_6a(df, par):
 
     trainset = df[0]
+    traintarget = df[1]
 
     # find number of rows and columns
     num_col = len(trainset.columns)
@@ -324,25 +326,31 @@ def model_train_svm_6a(df, par):
     print(num_col, num_row)
 
     # get the features and labels
-    train_feature = trainset.iloc[:, 0:(num_col-1)].values
-    train_label = trainset.iloc[:,num_col-1].values
-    #print(train_feature)
-    #print(train_label)
+    train_feature = trainset.iloc[:, 0:(num_col)].values
+    train_label = traintarget.iloc[:,0].values
+    print(train_feature)
+    print(train_label)
 
     #print(train_feature, train_label, test_feature, test_label)
     print('%s train features and targets extracted' % datetime.datetime.now())
 
     # start to train
-    svm_model = svm_train(train_feature, train_label)
+    if par['model'] == 'svm':
+        model = svm_train(train_feature, train_label)
+        models['svm'] = model
+    elif par['model'] == 'random_forest':
+        model = random_forest_train(train_feature, train_label)
+        models['random_forest'] = model
     print('%s training completed' % datetime.datetime.now())
-
-    models['svm'] = svm_model
 
     return []
 
-def model_test_svm_6b(df, par):
+def model_test_6b(df, par):
 
-    svm_model = models['svm']
+    if par['model'] == 'svm':
+        model = models['svm']
+    elif par['model'] == 'random_forest':
+        model = models['random_forest']
     testset = df[0]
     testset_customerid = df[1]
 
@@ -352,11 +360,11 @@ def model_test_svm_6b(df, par):
     print(num_col, num_row)
 
     # get the test features and labels
-    test_feature = testset.iloc[:, 0:(num_col-1)].values
-    #print(test_feature)
+    test_feature = testset.iloc[:, 0:(num_col)].values
+    print(test_feature)
 
     # generate the confidence level for each row
-    predict_confidence = svm_model.predict_proba(test_feature)
+    predict_confidence = model.predict_proba(test_feature)
     assert len(predict_confidence) == num_row
     #print(predict_confidence)
 
@@ -380,7 +388,7 @@ def model_test_svm_6b(df, par):
             label_options = str(devset1.ix[idx,'A']) + str(devset1.ix[idx,'B']) + str(devset1.ix[idx,'C']) + \
                              str(devset1.ix[idx,'D']) + str(devset1.ix[idx,'E']) + str(devset1.ix[idx,'F']) + \
                              str(devset1.ix[idx,'G'])
-            print(predict_options, label_options)
+            #print(predict_options, label_options)
             if not (predict_options == label_options):
                 num_err += 1
 
@@ -430,8 +438,8 @@ def main():
             '3z': merge_datasets_3z,
             '4a': preprocess_train_4a,
             '4b': feature_selection_4b,
-            '6a': model_train_svm_6a,
-            '6b': model_test_svm_6b,
+            '6a': model_train_6a,
+            '6b': model_test_6b,
             '7b': last_quoted_plan_benchmark_7b
             }
 

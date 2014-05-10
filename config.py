@@ -20,8 +20,8 @@ pars = {'0a': None,
         '3z': {'handle_duplicate': 1}, # 1 presents do, 0 presents do not
         '4a': {'missing': '4'},
         '4b': {'C' : 0.01, 'penalty' : 'l1', 'dual' : False, 'isTest': True},
-        '6a': None,
-        '6b': {'mode': 'dev'}
+        '6a': {'model': 'random_forest'},
+        '6b': {'mode': 'dev', 'model' : 'random_forest'}
         }
 
 df_in = {'0a': 'test_only_in1',
@@ -37,8 +37,8 @@ df_in = {'0a': 'test_only_in1',
         '3z': [nametag,nametag+'_static',nametag+'_dynamic'],
         '4a': nametag+'_pool',
         '4b': [nametag+'_preprocessing','selected_features',nametag+'_target'],
-        '6a': ['trainset_tmp'],
-        '6b': ['devset0_tmp', 'devset0_customer_ID_tmp', 'devset1_tmp']
+        '6a': ['trainset_ready','trainset_target'],
+        '6b': ['devset0_ready', 'devset0_customer_ID', 'devset1']
         }
 
 df_out = {'0a': ['test_only_out1','test_only_out2'],
@@ -69,8 +69,8 @@ df_to_read = {'0a': 'test_only_in1',
               #'3z': [nametag,nametag+'_static',nametag+'_dynamic'],
               #'4a': nametag+'_pool',
               #'4b': [nametag+'_preprocessing','selected_features',nametag+'_target'],
-              '6a': ['trainset_tmp'],
-              '6b': ['devset0_tmp', 'devset0_customer_ID_tmp', 'devset1_tmp']
+              '6a': ['trainset_ready','trainset_target'],
+              '6b': ['devset0_ready', 'devset0_customer_ID', 'devset1']
             }
 
 # Names of datasets to be written to disk
