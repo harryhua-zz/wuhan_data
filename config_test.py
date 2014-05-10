@@ -4,7 +4,7 @@ exec_seq = ['1b','2a','2b','3a','3b','3z','4a']
 
 pars = {'0a': None,
         '1a': {'dir': "../data/", 'fname': "train.csv.zip"},
-        '1b': {'dir': "../data/", 'fname': "test.csv.zip"},
+        '1b': {'dir': "../data/", 'fname': "test_v2.csv.zip"},
         '1z': {'train_ratio': 0.7, 'seed': '1000', 'dir': 'data/', 'fname': 'train_5sandy_test_100.csv'},
         '2a': {'columns':['state','location','group_size','homeowner','car_age','car_value','risk_factor',\
                 'age_oldest','age_youngest','married_couple','C_previous','duration_previous']},
