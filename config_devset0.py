@@ -11,7 +11,7 @@ pars = {'0a': None,
         '2b': None,
         '2fy1': {'log': "../log/step_2fy.log"},
         '2fy2': None,
-        '3a': {'condprob':(('A','B','C','D','E','F'),\
+        '3a': {'condprob':(('A','B','C','D','E','F','G'),\
                 ('day','state','group_size','homeowner','car_value',\
                 'risk_factor','married_couple','C_previous','duration_previous','r_hour','r_location',\
                 'r_car_age','r_age_oldest','r_age_youngest','r_cost'))},
