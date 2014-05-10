@@ -1,5 +1,5 @@
 nametag = 'devset0'
-exec_seq = ['1a','1z','2a','2b']#'3b','3z','4a','4b']
+exec_seq = ['6z']
 
 pars = {'0a': None,
         '1a': {'dir': "../data/", 'fname': "train.csv.zip"},
@@ -21,7 +21,8 @@ pars = {'0a': None,
         '4a': {'missing': '4'},
         '4b': {'C' : 0.01, 'penalty' : 'l1', 'dual' : False, 'isTest': True},
         '6a': {'model': 'random_forest'},
-        '6b': {'mode': 'dev', 'model' : 'random_forest'}
+        '6b': {'mode': 'dev', 'model' : 'random_forest'},
+        '6z': {'model': 'random_forest', 'mode': 'dev'}
         }
 
 df_in = {'0a': 'test_only_in1',
@@ -38,7 +39,8 @@ df_in = {'0a': 'test_only_in1',
         '4a': nametag+'_pool',
         '4b': [nametag+'_preprocessing','selected_features',nametag+'_target'],
         '6a': ['trainset_ready','trainset_target'],
-        '6b': ['devset0_ready', 'devset0_customer_ID', 'devset1']
+        '6b': ['devset0_ready', 'devset0_customer_ID', 'devset1'],
+        '6z': ['trainset_ready','trainset_target', 'devset0_ready', 'devset0_customer_ID', 'devset1']
         }
 
 df_out = {'0a': ['test_only_out1','test_only_out2'],
@@ -55,7 +57,8 @@ df_out = {'0a': ['test_only_out1','test_only_out2'],
         '4a': nametag+'_preprocessing',
         '4b': [nametag+'_ready','selected_features'],
         '6a': [],
-        '6b': ['predict_options']
+        '6b': ['predict_options'],
+        '6z': ['predict_options']
         }
 
 # Names of datasets to be read from disk
@@ -70,7 +73,8 @@ df_to_read = {'0a': 'test_only_in1',
               #'4a': nametag+'_pool',
               #'4b': [nametag+'_preprocessing','selected_features',nametag+'_target'],
               '6a': ['trainset_ready','trainset_target'],
-              '6b': ['devset0_ready', 'devset0_customer_ID', 'devset1']
+              '6b': ['devset0_ready', 'devset0_customer_ID', 'devset1'],
+              '6z': ['trainset_ready','trainset_target', 'devset0_ready', 'devset0_customer_ID', 'devset1']
             }
 
 # Names of datasets to be written to disk
@@ -83,6 +87,7 @@ df_to_write = {'0a': ['test_only_out1','test_only_out2'],
         '3z': [nametag+'_pool',nametag+'_target',nametag+'_customer_ID'],
         '4a': nametag+'_preprocessing',
         '4b': [nametag+'_ready','selected_features'],
-        '6b': ['predict_options']
+        '6b': ['predict_options'],
+        '6z': ['predict_options']
         }
 

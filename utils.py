@@ -138,6 +138,17 @@ def filterUnmatchedRecord(df, columns):
     df_filtered = df.drop(df.index[remove_list])
     return df_filtered
 
+def single_model_train(train_feature, train_label, model_input, params=None):
+    
+    if model_input == 'svm':
+        clf = svm.SVC(probability=True, verbose=True, max_iter=10, kernel='rbf')
+        clf.fit(train_feature, train_label)
+    elif model_input == 'random_forest':
+        clf = ensemble.RandomForestClassifier(n_estimators=10, criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, max_features='auto', bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=1, min_density=None, compute_importances=None)
+        clf.fit(train_feature, train_label)
+        
+    return clf
+
 # This method trains an SVM model given the features, labels and parameter sets
 # it returns the model object
 def svm_train(train_feature, train_label, params=None):
