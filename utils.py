@@ -111,21 +111,22 @@ def filterUnmatchedRecord(df, columns):
     Filter out the records that have unmatched customer characteristics (except for "time"
     and "day") compared to the last record for each customer.
     """
-    df_benchmark = df.groupby(['customer_ID']).last()
+    # Commented out by FY. Method last() will carry the last non-missing values forward to rows below.
+    #df_benchmark = df.groupby(['customer_ID']).last()
+    df_benchmark = df.groupby('customer_ID').agg(lambda x: x.iloc[-1])
 
     record_num = len(df)
     remove_list = []
     for i in range(record_num):
-        customer_id = df.ix[i, 'customer_ID']
+        customer_id = df.iloc[i]['customer_ID']
 
-        if df.ix[i, 'record_type'] == 1: # if record_type=1 then skip
+        if df.iloc[i]['record_type'] == 1: # if record_type=1 then skip
             continue
 
         isMatch = True
         for column in columns: #all customer characteristics except for "day" and "time"
-            print(column)
-            if df.ix[i, column] != df_benchmark.ix[customer_id, column]:
-                if pd.isnull(df.ix[i, column]) and pd.isnull(df_benchmark.ix[customer_id, column]):
+            if df.iloc[i][column] != df_benchmark.at[customer_id, column]:
+                if pd.isnull(df.iloc[i][column]) and pd.isnull(df_benchmark.at[customer_id, column]):
                     continue
                 isMatch = False
                 break
@@ -151,7 +152,7 @@ def svm_train(train_feature, train_label, params=None):
 #   customer_IDs should be unique
 #   plan is the predicted option combination for this customer
 def confidence_evaluate(customerid, features, confidence):
-    
+
     # safety check
     num_row = len(customerid)
     assert num_row == len(confidence)
@@ -160,12 +161,12 @@ def confidence_evaluate(customerid, features, confidence):
     print(num_row, len(confidence), len(features.index))
     print(confidence)
     print(customerid)
-    
+
     # create the predict options
     predict_options_df = {}
     customerid_list = []
     options_list= []
-    
+
     prev_customerid = customerid.ix[0, 'customer_ID']
     customerid_list.append(prev_customerid)
     max_confidence = -1
@@ -205,14 +206,14 @@ def confidence_evaluate(customerid, features, confidence):
                 max_confidence = conf
                 max_confidence_idx = n
         n += 1
-    
+
     # write into the data frame
     print(customerid_list)
     print(predict_options)
     predict_options_df['cusotmer_ID'] = customerid_list
     predict_options_df['plan'] = options_list
     df = pd.DataFrame(predict_options_df)
-    
+
     return df
 
 

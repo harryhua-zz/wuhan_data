@@ -57,7 +57,7 @@ def split_data_1z(df, par):
             dev_arr[r] = 0
         # check the record type column to see whether it is
         # a new customer ID
-        if df.ix[r,'record_type'] == 1:
+        if df.iloc[r]['record_type'] == 1:
             new_customer_flag = True
             dev_arr[r] = -dev_arr[r]
     #print(dev_arr)
@@ -82,6 +82,7 @@ def summarize_data_2a(df, par):
     return None
 
 def filter_records_2a(df, par):
+    print("There are {} unique customers.".format(len(df.groupby('customer_ID'))))
     return filterUnmatchedRecord(df,par['columns'])
 
 def recode_features_2b(df, par):
@@ -91,6 +92,7 @@ def recode_features_2b(df, par):
     df[1] is the dataset that provides help (train).
     notice that this function is project specific -- Allstate only
     """
+    print("There are {} unique customers.".format(len(df[0].groupby('customer_ID'))))
     recoded_features = df[0]
     helper_features = df[1]
 
@@ -182,9 +184,9 @@ def create_dynamic_features_3b(df,par):
     i = 0   # index of the start row of one customer
     j = 0   # index of the start row of next customer
     while j < rowindex:
-        current_customerID = df_small.ix[i,'customer_ID']
+        current_customerID = df_small.iloc[i]['customer_ID']
         # move j to the start row of next customer
-        while df_small.ix[j,'customer_ID'] == current_customerID:
+        while df_small.iloc[j]['customer_ID'] == current_customerID:
             j +=1
             if j == rowindex:
                 break
@@ -196,16 +198,16 @@ def create_dynamic_features_3b(df,par):
         option_set = set()  # a set used to check the duplicate option_combine
         option_dict = {}    # a dictionary to record the frequency for each option_combine
         # last quote for current customer
-        if df_small.ix[k, 'record_type'] == 0:
-            last_quote = df_small.ix[k,'option_combine']
+        if df_small.iloc[k]['record_type'] == 0:
+            last_quote = df_small.iloc[k]['option_combine']
         elif quote_count > 1:
-            last_quote = df_small.ix[k-1,'option_combine']
+            last_quote = df_small.iloc[k-1]['option_combine']
         else:
             last_quote = -1     # no last quote for this customer
         # iterate all rows for current customer from backward
         while k>=i:
-            option_value = df_small.ix[k,'option_combine']
-            record_type = df_small.ix[k,'record_type']
+            option_value = df_small.iloc[k]['option_combine']
+            record_type = df_small.iloc[k]['record_type']
             # compute the value for column of "is_Duplicate"
             if option_value in option_set:
                 isDuplicate.insert(i,1)
@@ -225,7 +227,7 @@ def create_dynamic_features_3b(df,par):
         # iterate all rows to set the value for column "is_LastQuote", "quote_Frequency" and "quote_Percent"
         t = i
         while t < j:
-            option = df_small.ix[t,'option_combine']
+            option = df_small.iloc[t]['option_combine']
             frequency = option_dict[option]
             quote_frequency.append(frequency)
             #quote_percent.append(round(frequency*1.0/quote_count,2))

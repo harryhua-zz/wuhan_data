@@ -1,5 +1,5 @@
 nametag = 'devset0'
-exec_seq = ['3b','3z','4a','4b']
+exec_seq = ['1a','1z','2a','2b']#'3b','3z','4a','4b']
 
 pars = {'0a': None,
         '1a': {'dir': "../data/", 'fname': "train.csv.zip"},
@@ -62,7 +62,7 @@ df_out = {'0a': ['test_only_out1','test_only_out2'],
 # Can be a string or a list of strings
 df_to_read = {'0a': 'test_only_in1',
               #'1z': 'train',
-              #'2a': [nametag,'trainset'],
+              '2a': [nametag,'trainset'],
               #'2b': [nametag,'trainset'], # the latter should be trainset at most times
               #'3a': [nametag,'trainset'],  # the latter should be trainset at most times
               '3b': [nametag,'devset0_static','selected_features'],
