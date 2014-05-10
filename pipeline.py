@@ -1,4 +1,4 @@
-import sys
+import sys, os.path
 from sklearn import preprocessing # add by sandy
 from sklearn import svm
 from sklearn.svm import LinearSVC
@@ -453,9 +453,11 @@ def main():
         if id in df_to_read:
             if isinstance(df_to_read[id],list):
                 for dfName in df_to_read[id]:
-                    datasets[dfName] = pd.read_csv('../data/'+dfName+'.csv')
+                    if os.path.isfile('../data/'+dfName+'.csv'):
+                        datasets[dfName] = pd.read_csv('../data/'+dfName+'.csv')
             else:
-                datasets[df_to_read[id]] = pd.read_csv('../data/'+df_to_read[id]+'.csv')
+                if os.path.isfile('../data/'+df_to_read[id]+'.csv'):
+                    datasets[df_to_read[id]] = pd.read_csv('../data/'+df_to_read[id]+'.csv')
         # major loop that calls all the steps in execution sequence
         inputDataframes = lookupDict(datasets,df_in[id])
         if isinstance(df_out[id],list):
