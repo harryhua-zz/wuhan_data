@@ -223,7 +223,7 @@ def confidence_evaluate(customerid, features, confidence):
     # write into the data frame
     #print(customerid_list)
     #print(predict_options)
-    predict_options_df['cusotmer_ID'] = customerid_list
+    predict_options_df['customer_ID'] = customerid_list
     predict_options_df['plan'] = options_list
     df = pd.DataFrame(predict_options_df)
 
