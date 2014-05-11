@@ -138,23 +138,18 @@ def filterUnmatchedRecord(df, columns):
     df_filtered = df.drop(df.index[remove_list])
     return df_filtered
 
-# This method trains an SVM model given the features, labels and parameter sets
-# it returns the model object
-def svm_train(train_feature, train_label, params=None):
-
-    clf = svm.SVC(probability=True, verbose=True, max_iter=1, kernel='linear')
-    clf.fit(train_feature, train_label)
-
+def single_model_train(train_feature, train_label, model_input, params=None):
+    
+    if model_input == 'svm':
+        clf = svm.SVC(probability=True, verbose=True, max_iter=10, kernel='rbf')
+        clf.fit(train_feature, train_label)
+    elif model_input == 'random_forest':
+        #clf = ensemble.RandomForestClassifier(n_estimators=10, criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, max_features='auto', bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=1, min_density=None, compute_importances=None)
+        clf = ensemble.RandomForestClassifier(n_estimators=params['n_estimators'], min_samples_split=params['min_samples_split'], min_samples_leaf=params['min_samples_leaf'])
+        clf.fit(train_feature, train_label)
+        
     return clf
 
-# This method trains an Random Forest model given the features, labels and parameter sets
-# it returns the model object
-def random_forest_train(train_feature, train_label, params=None):
-
-    clf = ensemble.RandomForestClassifier(n_estimators=10, criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, max_features='auto', bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=1, min_density=None, compute_importances=None)
-    clf.fit(train_feature, train_label)
-
-    return clf
 
 # this method generate the confidence of each test row:
 # input: customerid, test features, confidence list
@@ -178,6 +173,7 @@ def confidence_evaluate(customerid, features, confidence):
     options_list= []
 
     prev_customerid = customerid.ix[0, 'customer_ID']
+    #prev_customerid = customerid.iloc[0]['customer_ID']
     customerid_list.append(prev_customerid)
     max_confidence = -1
     max_confidence_idx = -1
@@ -190,6 +186,7 @@ def confidence_evaluate(customerid, features, confidence):
             store_options = True
         else:
             cur_customerid = customerid.ix[n, 'customer_ID']
+            #cur_customerid = customerid.iloc[n]['customer_ID']
             conf = confidence[n][1]
             if cur_customerid == prev_customerid:
                 # still the same customer ID, update confidence
@@ -204,10 +201,16 @@ def confidence_evaluate(customerid, features, confidence):
                 store_options = True
         if store_options:
             idx = max_confidence_idx
-            predict_options = str(features.ix[idx,'A']) + str(features.ix[idx,'B']) + str(features.ix[idx,'C']) + \
-                             str(features.ix[idx,'D']) + str(features.ix[idx,'E']) + str(features.ix[idx,'F']) + \
-                             str(features.ix[idx,'G'])
+            #predict_options = str(features.ix[idx,'A']) + str(features.ix[idx,'B']) + str(features.ix[idx,'C']) + \
+            #                 str(features.ix[idx,'D']) + str(features.ix[idx,'E']) + str(features.ix[idx,'F']) + \
+            #                 str(features.ix[idx,'G'])
+            predict_options = ""
+            for oi in ['A', 'B', 'C', 'D', 'E', 'F', 'G']:
+                #predict_options += str( int(features.iloc[idx][oi]) )
+                predict_options += str(features.ix[idx, oi])
+
             #print('idx: %d, n: %d' % (idx+2, n))
+            #print(str(features.ix[idx,'A']), str(int(features.iloc[idx]['A'])))
             #print(predict_options)
             options_list.append(predict_options)
             if n >= num_row:
@@ -275,4 +278,12 @@ def Normalize(df):
     """
     filtered_train_norm = (df - df.mean()) / (df.max() - df.min())
     return filtered_train_norm
+
+def floatrange(start, stop, step):
+    r = start
+    output = [r]
+    while r < stop - 1e-5:
+        r += step
+        output.append(r)
+    return output
 

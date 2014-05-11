@@ -9,6 +9,7 @@ from config import *
 import random
 import datetime
 import warnings
+import itertools
 
 # Supress annoying pandas warnings
 warnings.simplefilter(action = 'ignore', category = DeprecationWarning)
@@ -346,12 +347,12 @@ def feature_selection_4b(df, par):
 
     return df_trainready
 
-
-def model_train_6a(df, par):
-
+def model_train_test_6z(df, par):
+    
     trainset = df[0]
     traintarget = df[1]
-
+    model_input = par['model']
+    
     # find number of rows and columns
     num_col = len(trainset.columns)
     num_row = len(trainset.index)
@@ -366,76 +367,116 @@ def model_train_6a(df, par):
     #print(train_feature, train_label, test_feature, test_label)
     print('%s train features and targets extracted' % datetime.datetime.now())
 
-    # start to train
-    if par['model'] == 'svm':
-        model = svm_train(train_feature, train_label)
-        models['svm'] = model
-    elif par['model'] == 'random_forest':
-        model = random_forest_train(train_feature, train_label)
-        models['random_forest'] = model
-    print('%s training completed' % datetime.datetime.now())
+    # get the parameters for the model
+    parameters = par[model_input]
+    all_param_name = []
+    all_param_value_list = []
+    for key_val in parameters.items():
+        param_name = key_val[0]
+        param_value_list = key_val[1]
+        all_param_name.append(param_name)
+        all_param_value_list.append(param_value_list)
+    len_all_param_name = len(all_param_name)
+    print(all_param_name, all_param_value_list)
+    
+    # get all the combinations of parameters
+    allcb_param_value_list = list(itertools.product(*all_param_value_list))
+    len_allcb = len(allcb_param_value_list)
+    print(allcb_param_value_list, len_allcb)
+    
+    final_result = {}
+    for n in range(len_all_param_name):
+        final_result[all_param_name[n]] = []
+    final_result['prediction_rate'] = []
+    print(final_result)
+        
+    for p in allcb_param_value_list:
+        # construct the parameter dictionary
+        len_p = len(p)
+        print(len_p)
+        params = dict()
+        for n in range(len_p):
+            params[all_param_name[n]] = p[n]
+            l = final_result[all_param_name[n]]
+            l.append(p[n])
+        print(params)
 
-    return []
+        # start to train
+        model = single_model_train(train_feature, train_label, model_input, params)
+        models[model_input] = model
+        print('%s training completed' % datetime.datetime.now())
+    
+        # start to test
+        model = models[model_input]
+        testset = df[2]
+        testset_customerid = df[3]
+    
+        # find number of rows and columns
+        num_col = len(testset.columns)
+        num_row = len(testset.index)
+        print(num_col, num_row)
+    
+        # get the test features and labels
+        test_feature = testset.iloc[:, 0:(num_col)].values
+        print(test_feature)
+    
+        # generate the confidence level for each row
+        predict_confidence = model.predict_proba(test_feature)
+        assert len(predict_confidence) == num_row
+        print(predict_confidence)
+    
+        # generate the predicted options for each customer ID
+        predict_options_df = confidence_evaluate(testset_customerid, testset, predict_confidence)
+        print('%s confidence list generated' % datetime.datetime.now())
+    
+        if par['mode'] is 'dev':
+            # compare the predict_options with the devset1
+            devset1 = df[4]
+            num_row_devset1 = len(devset1.index)
+            num_row_predict_options = len(predict_options_df.index)
+            print(num_row_devset1, num_row_predict_options)
+            assert num_row_devset1 == num_row_predict_options
+    
+            num_customer = num_row_devset1
+            num_err = 0
+            for n in range(num_customer):
+                idx = n
+                predict_options = predict_options_df.ix[n, 'plan']
+                #label_options = str(devset1.ix[idx,'A']) + str(devset1.ix[idx,'B']) + str(devset1.ix[idx,'C']) + \
+                #                 str(devset1.ix[idx,'D']) + str(devset1.ix[idx,'E']) + str(devset1.ix[idx,'F']) + \
+                #                 str(devset1.ix[idx,'G'])
+                #label_options = str(devset1.iloc[idx]['A']) + str(devset1.iloc[idx]['B']) + str(devset1.iloc[idx]['C']) + \
+                #     str(devset1.iloc[idx]['D']) + str(devset1.iloc[idx]['E']) + str(devset1.iloc[idx]['F']) + \
+                #     str(devset1.iloc[idx]['G'])
+                label_options = ""
+                for oi in ['A', 'B', 'C', 'D', 'E', 'F', 'G']:
+                    #label_options += str( int(devset1.iloc[idx][oi]) )
+                    label_options += str(devset1.ix[idx, oi])            
+    
+                #print(predict_options, label_options)
+                if not (predict_options == label_options):
+                    num_err += 1
+    
+            error_rate = 1.0 * num_err / num_customer
+            print('#################')
+            print('Formal Evaluation:')
+            print('number of mis-predictions: %d, number of test cases(customers): %d, error rate %f, prediction rate %f' \
+                  % (num_err, num_customer, error_rate, 1-error_rate) )
+            print('#################')
+            
+            l = final_result['prediction_rate']
+            l.append(1-error_rate)
+    
+        elif par['mode'] is 'test':
+            # output the final prediction report
+            pass
 
-def model_test_6b(df, par):
-
-    if par['model'] == 'svm':
-        model = models['svm']
-    elif par['model'] == 'random_forest':
-        model = models['random_forest']
-    testset = df[0]
-    testset_customerid = df[1]
-
-    # find number of rows and columns
-    num_col = len(testset.columns)
-    num_row = len(testset.index)
-    print(num_col, num_row)
-
-    # get the test features and labels
-    test_feature = testset.iloc[:, 0:(num_col)].values
-    print(test_feature)
-
-    # generate the confidence level for each row
-    predict_confidence = model.predict_proba(test_feature)
-    assert len(predict_confidence) == num_row
-    #print(predict_confidence)
-
-    # generate the predicted options for each customer ID
-    predict_options_df = confidence_evaluate(testset_customerid, testset, predict_confidence)
-    print('%s confidence list generated' % datetime.datetime.now())
-
-    if par['mode'] is 'dev':
-        # compare the predict_options with the devset1
-        devset1 = df[2]
-        num_row_devset1 = len(devset1.index)
-        num_row_predict_options = len(predict_options_df.index)
-        print(num_row_devset1, num_row_predict_options)
-        assert num_row_devset1 == num_row_predict_options
-
-        num_customer = num_row_devset1
-        num_err = 0
-        for n in range(num_customer):
-            idx = n
-            predict_options = predict_options_df.ix[n, 'plan']
-            label_options = str(devset1.ix[idx,'A']) + str(devset1.ix[idx,'B']) + str(devset1.ix[idx,'C']) + \
-                             str(devset1.ix[idx,'D']) + str(devset1.ix[idx,'E']) + str(devset1.ix[idx,'F']) + \
-                             str(devset1.ix[idx,'G'])
-            #print(predict_options, label_options)
-            if not (predict_options == label_options):
-                num_err += 1
-
-        error_rate = 1.0 * num_err / num_customer
-        print('#################')
-        print('Formal Evaluation:')
-        print('number of mis-predictions: %d, number of test cases(customers): %d, error rate %f, prediction rate %f' \
-              % (num_err, num_customer, error_rate, 1-error_rate) )
-        print('#################')
-
-    elif par['mode'] is 'test':
-        # output the final prediction report
-        pass
-
-    return [predict_options_df]
+        print(predict_options_df)
+    
+    print(final_result)
+    final_result_df = pd.DataFrame(final_result)
+        
+    return [predict_options_df, final_result_df]    
 
 
 def last_quoted_plan_benchmark_7b(df, par):
@@ -470,8 +511,9 @@ def main():
             '3z': merge_datasets_3z,
             '4a': preprocess_train_4a,
             '4b': feature_selection_4b,
-            '6a': model_train_6a,
-            '6b': model_test_6b,
+            #'6a': model_train_6a,
+            #'6b': model_test_6b,
+            '6z': model_train_test_6z,
             '7b': last_quoted_plan_benchmark_7b
             }
 
