@@ -105,13 +105,15 @@ def recode_features_2b(df, par):
     recoded_features['r_age_oldest'] = pd.cut(recoded_features['age_oldest'],[-1,28,44,60,100]).labels
     recoded_features['r_age_youngest'] = pd.cut(recoded_features['age_youngest'],[-1,26,40,57,100]).labels
     recoded_features['r_cost'] = pd.cut(recoded_features['cost'],[-1,605,635,665,1000]).labels
+    # dealing with missing in location
+    recoded_features['location'] = recoded_features['location'].fillna(99999).astype(int)
     recoded_features_first = recoded_features.groupby('customer_ID').agg(lambda x: x.iloc[0])
     location_count = recoded_features_first.groupby('location')['location'].count()
     location_hash = pd.Series(pd.qcut(location_count,4).labels,index=location_count.index)
     #bought = helper_features.loc[helper_features['record_type']==1,:]
     #bought_count = bought.groupby('location')['location'].count()
     #rhash = bought_count.apply(lambda x: int(x>10)+int(x>15)+int(x>25))
-    recoded_features['r_location'] = recoded_features['location'].apply(lambda row: location_hash.get(row))
+    recoded_features['r_location'] = recoded_features['location'].apply(lambda row: location_hash[row])
 
     return [recoded_features]
 
