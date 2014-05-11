@@ -471,6 +471,8 @@ def model_train_test_6z(df, par):
     
         elif par['mode'] is 'test':
             # output the final prediction report
+            l = final_result['prediction_rate']
+            l.append(0)
             pass
 
         print(predict_options_df)
