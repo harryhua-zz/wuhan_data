@@ -1,5 +1,15 @@
+Ideas / Questions:
+    - Does Kaggle submission accuracy increase as our devset accuracy increases?
+    - What are the unquoted-but-bought plans like? Can they be defined as "neighboring" plans?
+    - How different are the customers who buy unquoted plans than the "normal" customers?
+    - Try more models
+    - How to merge results from different models?
+    - Label records with bought plans as 1 even if its record_type == 0
+=========================================================================================================================================================================
+
 /*******************************************************
 **     NAMETAG = 'trainset' or 'devset0' or 'test'    **
+**     INFOTAG = 'trainset' or 'train'                **
 *******************************************************/
 
 step 1: 
@@ -15,12 +25,12 @@ step 2:
     a: filter customers with changed characteristics                    -- input datasets[NAMETAG]
                                                                         -- output datasets[NAMETAG]
 
-    b: discretize/recode some original features                         -- input datasets[NAMETAG,'trainset']
+    b: discretize/recode some original features                         -- input datasets[NAMETAG,INFOTAG]
                                                                         -- output datasets[NAMETAG]
                                                                         -- to_csv(NAMETAG+'.csv')
 
 step 3:
-    a: create static features                                           -- input datasets[NAMETAG,'trainset']
+    a: create static features                                           -- input datasets[NAMETAG,INFOTAG]
                                                                         -- output datasets[NAMETAG+'_static'] 
                                                                         -- to_csv(NAMETAG+'_static.csv')
 
