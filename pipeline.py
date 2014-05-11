@@ -95,7 +95,7 @@ def recode_features_2b(df, par):
     """
     print("There are {} unique customers.".format(len(df[0].groupby('customer_ID'))))
     recoded_features = df[0]
-    helper_features = df[1]
+    #helper_features = df[1]
 
     car_value_map = {'a':0,'b':1,'c':2,'d':3,'e':4,'f':5,'g':6,'h':7,'i':8}
     recoded_features['car_value'] = recoded_features['car_value'].apply(lambda x: car_value_map.get(x))
@@ -105,10 +105,13 @@ def recode_features_2b(df, par):
     recoded_features['r_age_oldest'] = pd.cut(recoded_features['age_oldest'],[-1,28,44,60,100]).labels
     recoded_features['r_age_youngest'] = pd.cut(recoded_features['age_youngest'],[-1,26,40,57,100]).labels
     recoded_features['r_cost'] = pd.cut(recoded_features['cost'],[-1,605,635,665,1000]).labels
-    bought = helper_features.loc[helper_features['record_type']==1,:]
-    bought_count = bought.groupby('location')['location'].count()
-    rhash = bought_count.apply(lambda x: int(x>10)+int(x>15)+int(x>25))
-    recoded_features['r_location'] = recoded_features['location'].apply(lambda row: rhash.get(row))
+    recoded_features_first = recoded_features.groupby('customer_ID').agg(lambda x: x.iloc[0])
+    location_count = recoded_features_first.groupby('location')['location'].count()
+    location_hash = pd.Series(pd.qcut(location_count,4).labels,index=location_count.index)
+    #bought = helper_features.loc[helper_features['record_type']==1,:]
+    #bought_count = bought.groupby('location')['location'].count()
+    #rhash = bought_count.apply(lambda x: int(x>10)+int(x>15)+int(x>25))
+    recoded_features['r_location'] = recoded_features['location'].apply(lambda row: location_hash.get(row))
 
     return [recoded_features]
 
@@ -117,18 +120,47 @@ def analyze_2fy(df, par):
     """
     notice that this function is project specific -- Allstate only
     """
-    if par.get('log') != None:
-        log = open(par['log'], 'w')
-    else:
-        log = sys.stdout
-    df['hour'] = df.loc[:,'time'].apply(lambda x: x.split(':')[0])
+#   if par.get('log') != None:
+#       log = open(par['log'], 'w')
+#    else:
+#        log = sys.stdout
+#    df['hour'] = df.loc[:,'time'].apply(lambda x: x.split(':')[0])
+#
+#    for c in ['state','location','day','hour']:
+#        print1DRiskTable(gen1DRiskTable(df,c,'record_type',1),log)
+#
+#    if par.get('log') != None:
+#        log.close()
+#
+    df['options'] = df.apply(lambda x: str(x['A'])+str(x['B'])+str(x['C']) \
+            +str(x['D'])+str(x['E'])+str(x['F'])+str(x['G']),axis=1)
+    pos_options = df.columns.values.tolist().index('options')
+    pos_record_type = df.columns.values.tolist().index('record_type')
+    pos_customer_ID = df.columns.values.tolist().index('customer_ID')
+    nrow = len(df)
 
-    for c in ['state','location','day','hour']:
-        print1DRiskTable(gen1DRiskTable(df,c,'record_type',1),log)
+    keep_id = []
+    new_customer_flag = True
+    unique_options = set()
 
-    if par.get('log') != None:
-        log.close()
-    return None
+    for r in range(nrow):
+        if new_customer_flag:
+            unique_options.clear()
+            new_customer_flag = False
+        if df.iat[r,pos_record_type] == 1:
+            new_customer_flag = True
+            if df.iat[r,pos_options] not in unique_options:
+                keep_id.append(df.iat[r,pos_customer_ID])
+        else:
+            unique_options.add(df.iat[r,pos_options])
+
+    id = df['customer_ID'].values.tolist()
+    keep = np.zeros(len(id))
+    for i in range(len(id)):
+        if id[i] in keep_id:
+            keep[i] = 1
+
+    return df.iloc[keep==1,:]
 
 def create_static_features_3a(df, par):
 # TODO: This function fails when par['condprob'][0] or par['condprob'][1] has only one variable in the list
