@@ -287,3 +287,72 @@ def floatrange(start, stop, step):
         output.append(r)
     return output
 
+def addSyntheticOptions(df):
+    """
+    author: taku
+    Add synthetic option combinations (all neighboring option combinations of the last quote's) for each 
+    customer, in order to address truncation and buy-without-quote issues.
+    """
+    A_values = [0,1,2]
+    B_values = [0,1]
+    C_values = [1,2,3,4]
+    D_values = [1,2,3]
+    E_values = [0,1]
+    F_values = [0,1,2,3]
+    G_values = [1,2,3,4]
+    option_values = []
+    option_values.append(A_values)
+    option_values.append(B_values)
+    option_values.append(C_values)
+    option_values.append(D_values)
+    option_values.append(E_values)
+    option_values.append(F_values)
+    option_values.append(G_values)
+
+    customer_max_shopping_point = df.iloc[:,0:1].groupby('customer_ID').count().iloc[:,0]
+    customer_num = len(customer_max_shopping_point)
+    index_cur = -1
+    index_last = -1
+    df_new = None
+    isFirst = True
+    for i in range(customer_num):
+        index_last = index_cur
+        index_cur += customer_max_shopping_point.iloc[i]
+        last_quote_record = df.iloc[index_cur : index_cur + 1,:]
+        customer_records = df.iloc[index_last + 1 : index_cur + 1]
+        if isFirst == True: 
+            df_new = customer_records
+            isFirst = False
+        else:
+            df_new = pd.concat([df_new, customer_records], axis = 0)
+    
+        index = 0
+        for change_opt in ['A','B','C','D','E','F','G']:
+            for value in option_values[index]:
+                if value == last_quote_record.iloc[0][change_opt]:
+                    continue
+                else:
+                    isFound = False
+                    for record_index in range(len(customer_records.index)):
+                        customer_record = customer_records.iloc[record_index]
+                        isMatch = True
+                        for opt in ['A','B','C','D','E','F','G']:
+                            if opt == change_opt:
+                                if value != customer_record[opt]:
+                                    isMatch = False
+                                    break
+                            else:
+                                if last_quote_record.iloc[0][opt] != customer_record[opt]:
+                                    isMatch = False
+                                    break
+                        if isMatch == True:
+                            isFound = True
+                            break
+                    if isFound != True:
+                        synthetic_record = last_quote_record.copy(deep = True)
+                        for opt in ['A','B','C','D','E','F','G']:
+                            if opt == change_opt:
+                                synthetic_record.loc[:,opt] = value
+                        df_new = pd.concat([df_new, synthetic_record], axis = 0) 
+            index += 1
+    return df_new
