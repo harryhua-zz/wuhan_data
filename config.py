@@ -1,8 +1,7 @@
 nametag = 'test'
 infotag = 'train'
-isTest = True
-#exec_seq = ['3z']
-exec_seq = ['2b','3a','3b']#'3z','4a','4b']
+isTest_4b = True
+exec_seq = ['1a','2fy2']
 
 pars = {'0a': None,
         '1a': {'dir': "../data/", 'fname': "train.csv.zip"},
@@ -22,9 +21,9 @@ pars = {'0a': None,
         #'3z': 0, # 0 presents for train, 1 presents for test
         '3z': {'handle_duplicate': 1}, # 1 presents do, 0 presents do not
         '4a': {'missing': '4'},
-        '4b': {'C' : 0.01, 'penalty' : 'l1', 'dual' : False, 'isTest': isTest},
-        '6z': {'model': 'random_forest', 'mode': 'dev', 'random_forest': \
-               {'n_estimators': [200], 'min_samples_split': [3], 'min_samples_leaf': [3]}},
+        '4b': {'C' : 0.01, 'penalty' : 'l1', 'dual' : False, 'isTest': isTest_4b},
+        '6z': {'model': 'random_forest', 'mode': 'test', 'random_forest': \
+                {'n_estimators': [50], 'min_samples_split': [3], 'min_samples_leaf': [3], 'criterion': ['entropy']}},
         }
 
 df_in = {'0a': 'test_only_in1',
@@ -40,7 +39,7 @@ df_in = {'0a': 'test_only_in1',
         '3z': [nametag,nametag+'_static',nametag+'_dynamic'],
         '4a': nametag+'_pool',
         '4b': [nametag+'_preprocessing','selected_features',nametag+'_target'],
-        '6z': ['trainset_ready','trainset_target', 'devset0_ready', 'devset0_customer_ID', 'devset1']
+        '6z': ['train_preprocessing','train_target', 'test_preprocessing', 'test_customer_ID', 'devset1']
         }
 
 df_out = {'0a': ['test_only_out1','test_only_out2'],
@@ -64,13 +63,13 @@ df_out = {'0a': ['test_only_out1','test_only_out2'],
 df_to_read = {'0a': 'test_only_in1',
               #'1z': 'train',
               #'2a': [nametag,infotag],
-              '2b': [nametag,infotag], # the latter should be trainset at most times
+              #'2b': [nametag,infotag], # the latter should be trainset at most times
               #'3a': [nametag,infotag],  # the latter should be trainset at most times
               #'3b': [nametag,'devset0_static','selected_features'],
               #'3z': [nametag,nametag+'_static',nametag+'_dynamic'],
               #'4a': nametag+'_pool',
               #'4b': [nametag+'_preprocessing','selected_features',nametag+'_target'],
-              '6z': ['trainset_ready','trainset_target', 'devset0_ready', 'devset0_customer_ID', 'devset1']
+              '6z': ['train_preprocessing','train_target', 'test_preprocessing', 'test_customer_ID', 'devset1']
             }
 
 # Names of datasets to be written to disk

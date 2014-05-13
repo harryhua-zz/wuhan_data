@@ -4,12 +4,16 @@ from sklearn import svm
 from sklearn.svm import LinearSVC
 from sklearn import ensemble
 from utils import *
+from metrics import *
 # import configuration file and figure out what to run
 from config import *
 import random
 import datetime
 import warnings
 import itertools
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import cross_validation
 
 # Supress annoying pandas warnings
 warnings.simplefilter(action = 'ignore', category = DeprecationWarning)
@@ -71,7 +75,7 @@ def split_data_1z(df, par):
 
     return [trainset, devset0, devset1]
 
-def summarize_data_2a(df, par):
+def summarize_data_2fy1(df, par):
     colNames = list(df.columns.values)
     print("==================================================== Summary ===================================================")
     print("nrows: ",df.shape[0],"ncols: ",df.shape[1])
@@ -114,12 +118,12 @@ def recode_features_2b(df, par):
     #bought = helper_features.loc[helper_features['record_type']==1,:]
     #bought_count = bought.groupby('location')['location'].count()
     #rhash = bought_count.apply(lambda x: int(x>10)+int(x>15)+int(x>25))
-    recoded_features['r_location'] = recoded_features['location'].apply(lambda row: location_hash[row])
+    recoded_features['r_location'] = recoded_features['location'].apply(lambda row: location_hash.get(row))
 
     return [recoded_features]
 
 
-def analyze_2fy(df, par):
+def analyze_2fy2(df, par):
     """
     notice that this function is project specific -- Allstate only
     """
@@ -135,35 +139,92 @@ def analyze_2fy(df, par):
 #    if par.get('log') != None:
 #        log.close()
 #
+    print('analyze_2fy2: clock starts at {}'.format(datetime.datetime.now()))
+    nrow = len(df)
     df['options'] = df.apply(lambda x: str(x['A'])+str(x['B'])+str(x['C']) \
             +str(x['D'])+str(x['E'])+str(x['F'])+str(x['G']),axis=1)
     pos_options = df.columns.values.tolist().index('options')
     pos_record_type = df.columns.values.tolist().index('record_type')
     pos_customer_ID = df.columns.values.tolist().index('customer_ID')
-    nrow = len(df)
 
-    keep_id = []
+    pos_A = df.columns.values.tolist().index('A')
+    pos_A_G = list(range(pos_A,pos_A+7))
+    ncustomers = len(df.groupby('customer_ID'))
+    diff_1 = np.zeros((ncustomers,7))
+    diff_3 = np.zeros((ncustomers,7))
+    diff_4 = np.zeros((ncustomers,7))
+    r_cust = -1
+
+    changed = np.zeros(nrow)
     new_customer_flag = True
     unique_options = set()
+    first_index = 0
+    keep_index = []
 
     for r in range(nrow):
         if new_customer_flag:
             unique_options.clear()
             new_customer_flag = False
+            first_index = r
+            r_cust += 1
         if df.iat[r,pos_record_type] == 1:
             new_customer_flag = True
+            keep_index.append(first_index)
             if df.iat[r,pos_options] not in unique_options:
-                keep_id.append(df.iat[r,pos_customer_ID])
+                changed[list(range(first_index,r+1))] = [1]*(r+1-first_index)
+                for ind in pos_A_G:
+                    diff_1[r_cust,ind-pos_A] = df.iat[r,ind] - df.iat[r-1,ind]
+                if df.iat[r,pos_customer_ID] == df.iat[r-3,pos_customer_ID]:
+                    for ind in pos_A_G:
+                        diff_3[r_cust,ind-pos_A] = df.iat[r,ind] - df.iat[r-3,ind]
+                if df.iat[r,pos_customer_ID] == df.iat[r-4,pos_customer_ID]:
+                    for ind in pos_A_G:
+                        diff_4[r_cust,ind-pos_A] = df.iat[r,ind] - df.iat[r-4,ind]
         else:
             unique_options.add(df.iat[r,pos_options])
 
-    id = df['customer_ID'].values.tolist()
-    keep = np.zeros(len(id))
-    for i in range(len(id)):
-        if id[i] in keep_id:
-            keep[i] = 1
+    pd.DataFrame(data=diff_1,columns=['A','B','C','D','E','F','G']).to_csv("../data/diff_1.csv",index=False,float_format="%.0f")
+    pd.DataFrame(data=diff_3,columns=['A','B','C','D','E','F','G']).to_csv("../data/diff_3.csv",index=False,float_format="%.0f")
+    pd.DataFrame(data=diff_4,columns=['A','B','C','D','E','F','G']).to_csv("../data/diff_4.csv",index=False,float_format="%.0f")
 
-    return df.iloc[keep==1,:]
+#    print("analyze_2fy2: customers are splitted at {}".format(datetime.datetime.now()))
+#
+#    # model training for buying unquoted plan or not
+#    df = recode_features_2b([df,None],None)[0]
+#    print("len(df) = {} after recoding".format(len(df)))
+#
+#    print("analyze_2fy2: features are recoded at {}".format(datetime.datetime.now()))
+#
+#    df = df.iloc[keep_index,:]
+#    changed = changed[keep_index]
+#
+#    train_df = df.drop(['customer_ID','shopping_pt','record_type','time','state','location','A','B','C','D','E','F','G','options'],axis=1)
+#    train_df = handleMissing(train_df,'4')
+#    train_df = Normalize(train_df)
+#    print("len(train_df) = {} after preprocessing".format(len(train_df)))
+#
+#    print("analyze_2fy2: dataset is preprocessed at {}".format(datetime.datetime.now()))
+#
+#    train = train_df.values
+#    target = changed
+#    print("len(train) = {}, len(target) = {}".format(len(train),len(target)))
+#
+#    cv = cross_validation.KFold(len(train), n_folds=5, indices=False)
+#    results_ll = []
+#    results_acc = []
+#
+#    for traincv, testcv in cv:
+#        model = single_model_train(train[traincv], target[traincv], 'random_forest', \
+#                {'n_estimators':50,'min_samples_split':3,'min_samples_leaf':3,'criterion':'entropy'})
+#        probas = model.predict_proba(train[testcv])
+#        pred = model.predict(train[testcv])
+#        results_ll.append(llfun(target[testcv], [x[1] for x in probas]))
+#        results_acc.append(accfun(target[testcv], pred))
+#
+#    print("analyze_2fy2: cross-validation is done at {}".format(datetime.datetime.now()))
+#    print("Results: mean logloss = {}, mean accuracy = {}".format(np.array(results_ll).mean(),np.array(results_acc).mean()))
+
+    return df.iloc[changed==1,:]
 
 def create_static_features_3a(df, par):
 # TODO: This function fails when par['condprob'][0] or par['condprob'][1] has only one variable in the list
@@ -350,11 +411,11 @@ def feature_selection_4b(df, par):
     return df_trainready
 
 def model_train_test_6z(df, par):
-    
+
     trainset = df[0]
     traintarget = df[1]
     model_input = par['model']
-    
+
     # find number of rows and columns
     num_col = len(trainset.columns)
     num_row = len(trainset.index)
@@ -380,18 +441,18 @@ def model_train_test_6z(df, par):
         all_param_value_list.append(param_value_list)
     len_all_param_name = len(all_param_name)
     print(all_param_name, all_param_value_list)
-    
+
     # get all the combinations of parameters
     allcb_param_value_list = list(itertools.product(*all_param_value_list))
     len_allcb = len(allcb_param_value_list)
     print(allcb_param_value_list, len_allcb)
-    
+
     final_result = {}
     for n in range(len_all_param_name):
         final_result[all_param_name[n]] = []
     final_result['prediction_rate'] = []
     print(final_result)
-        
+
     for p in allcb_param_value_list:
         # construct the parameter dictionary
         len_p = len(p)
@@ -407,30 +468,30 @@ def model_train_test_6z(df, par):
         model = single_model_train(train_feature, train_label, model_input, params)
         models[model_input] = model
         print('%s training completed' % datetime.datetime.now())
-    
+
         # start to test
         model = models[model_input]
         testset = df[2]
         testset_customerid = df[3]
-    
+
         # find number of rows and columns
         num_col = len(testset.columns)
         num_row = len(testset.index)
         print(num_col, num_row)
-    
+
         # get the test features and labels
         test_feature = testset.iloc[:, 0:(num_col)].values
         print(test_feature)
-    
+
         # generate the confidence level for each row
         predict_confidence = model.predict_proba(test_feature)
         assert len(predict_confidence) == num_row
         print(predict_confidence)
-    
+
         # generate the predicted options for each customer ID
         predict_options_df = confidence_evaluate(testset_customerid, testset, predict_confidence)
         print('%s confidence list generated' % datetime.datetime.now())
-    
+
         if par['mode'] is 'dev':
             # compare the predict_options with the devset1
             devset1 = df[4]
@@ -438,7 +499,7 @@ def model_train_test_6z(df, par):
             num_row_predict_options = len(predict_options_df.index)
             print(num_row_devset1, num_row_predict_options)
             assert num_row_devset1 == num_row_predict_options
-    
+
             num_customer = num_row_devset1
             num_err = 0
             for n in range(num_customer):
@@ -453,22 +514,22 @@ def model_train_test_6z(df, par):
                 label_options = ""
                 for oi in ['A', 'B', 'C', 'D', 'E', 'F', 'G']:
                     #label_options += str( int(devset1.iloc[idx][oi]) )
-                    label_options += str(devset1.ix[idx, oi])            
-    
+                    label_options += str(devset1.ix[idx, oi])
+
                 #print(predict_options, label_options)
                 if not (predict_options == label_options):
                     num_err += 1
-    
+
             error_rate = 1.0 * num_err / num_customer
             print('#################')
             print('Formal Evaluation:')
             print('number of mis-predictions: %d, number of test cases(customers): %d, error rate %f, prediction rate %f' \
                   % (num_err, num_customer, error_rate, 1-error_rate) )
             print('#################')
-            
+
             l = final_result['prediction_rate']
             l.append(1-error_rate)
-    
+
         elif par['mode'] is 'test':
             # output the final prediction report
             l = final_result['prediction_rate']
@@ -476,11 +537,11 @@ def model_train_test_6z(df, par):
             pass
 
         print(predict_options_df)
-    
+
     print(final_result)
     final_result_df = pd.DataFrame(final_result)
-        
-    return [predict_options_df, final_result_df]    
+
+    return [predict_options_df, final_result_df]
 
 
 def last_quoted_plan_benchmark_7b(df, par):
@@ -508,8 +569,8 @@ def main():
             '1z': split_data_1z,
             '2a': filter_records_2a,
             '2b': recode_features_2b,
-            '2fy1': summarize_data_2a,
-            '2fy2': analyze_2fy,
+            '2fy1': summarize_data_2fy1,
+            '2fy2': analyze_2fy2,
             '3a': create_static_features_3a,
             '3b': create_dynamic_features_3b,
             '3z': merge_datasets_3z,

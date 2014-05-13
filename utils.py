@@ -139,15 +139,15 @@ def filterUnmatchedRecord(df, columns):
     return df_filtered
 
 def single_model_train(train_feature, train_label, model_input, params=None):
-    
+
     if model_input == 'svm':
         clf = svm.SVC(probability=True, verbose=True, max_iter=10, kernel='rbf')
         clf.fit(train_feature, train_label)
     elif model_input == 'random_forest':
         #clf = ensemble.RandomForestClassifier(n_estimators=10, criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, max_features='auto', bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=1, min_density=None, compute_importances=None)
-        clf = ensemble.RandomForestClassifier(n_estimators=params['n_estimators'], min_samples_split=params['min_samples_split'], min_samples_leaf=params['min_samples_leaf'])
+        clf = ensemble.RandomForestClassifier(n_estimators=params['n_estimators'], min_samples_split=params['min_samples_split'], min_samples_leaf=params['min_samples_leaf'],criterion=params['criterion'])
         clf.fit(train_feature, train_label)
-        
+
     return clf
 
 
