@@ -5,6 +5,7 @@ from sklearn import cross_validation
 from datetime import datetime
 import os, sys, warnings
 import re
+from scipy import stats
 
 warnings.simplefilter(action='ignore', category=DeprecationWarning)
 
@@ -12,6 +13,35 @@ DEBUG=False
 
 NOPT=7
 MAX_OBS = 10003 #942
+CUMSUM_NOPT = np.cumsum(list(range(NOPT)))
+
+def decode_2_options(input_array):
+    results = {}
+    for i in range(NOPT):
+        results[i] = np.empty((len(input_array),NOPT-1))
+    for i in range(NOPT-1):
+        for j in range(i+1,NOPT):
+            rv = divmod(input_array[:,encode_pos(i,j)],10)
+            results[i][:,j-1] = rv[0]
+            results[j][:,i] = rv[1]
+    return results
+
+def encode_pos(i,j):
+    if i==j:
+        print("ERROR: This combination does not has a position in the array.")
+        return None
+    if i>j:
+        i,j = j,i
+    return CUMSUM_NOPT[NOPT-1] - CUMSUM_NOPT[NOPT-1-i] + (j-i-1)
+
+def encode_pos_list(i,offset=0):
+    return [encode_pos(i,x)+offset for x in range(NOPT) if x != i]
+
+def decode_pos(p):
+    p = CUMSUM_NOPT[NOPT-1] - 1 - p
+    for i in range(1,NOPT):
+        if p < CUMSUM_NOPT[i]:
+            return NOPT-1-i, CUMSUM_NOPT[i]-p + NOPT-1-i
 
 def plan_to_string(vec):
     """
@@ -295,29 +325,88 @@ def train_predict(train, target_all, test, test_customer_ID):
         target = target_all[:,i]
         pred[:,i] = cfr.fit(train,target).predict(test)
     plans = np.apply_along_axis(plan_to_string,1,pred)
-    return pd.DataFrame(np.concatenate((test_customer_ID.values,plans.reshape((len(pred),1))),axis=1),columns=['customer_ID','plan'])
+    test_customer_ID['plan'] = plans
+    return test_customer_ID
+
+def train_predict_2_options(train, target_all, test, test_customer_ID):
+    print("Entering train_predict_2_options at {}".format(datetime.now()))
+    if target_all.shape[1] != NOPT + CUMSUM_NOPT[NOPT-1]:
+        print("target_all shape {} is not correct. {} expected.".format(target_all.shape,(len(test),NOPT+CUMSUM_NOPT[NOPT-1])))
+        return None
+
+    cfr = RandomForestClassifier(n_estimators=100, criterion='entropy')
+    n_targets = target_all.shape[1]
+    pred = np.empty((len(test),n_targets))
+    pred_final = np.empty((len(test),NOPT))
+    for i in range(n_targets):
+        target = target_all[:,i]
+        pred[:,i] = cfr.fit(train,target).predict(test)
+
+    decoded_2_pred = decode_2_options(pred[:,NOPT:])
+    for i in range(NOPT):
+        decoded_2_pred[i] = np.concatenate((pred[:,i],decode_2_pred[i]),axis=1)
+        vals, counts = stats.mode(decoded_2_pred[i],axis=1)
+        pred_final[:,i] = vals.astype(int)
+
+    plans = np.apply_along_axis(plan_to_string,1,pred)
+    test_customer_ID['plan'] = plans
+    return test_customer_ID, decoded_2_pred
+
+def combine_2_options(target_all):
+    if target_all.shape[1] > NOPT:
+        print("target_all is already prepared.")
+        return target_all
+
+    target_2_options = np.empty((len(target_all),CUMSUM_NOPT[NOPT-1]))
+    for opt1 in range(NOPT-1):
+        for opt2 in range(opt1+1,NOPT):
+            target_2_options[:,encode_pos(opt1,opt2)] = target_all[:,opt1]*10 + target_all[:,opt2]
+
+    return pd.DataFrame(np.concatenate((target_all,target_2_options),axis=1))
 
 def main():
 
     run = sys.argv[1]
     n_to_last_record = int(sys.argv[2])
 
+    train_name = '../data/train_'+str(n_to_last_record)+'.csv'
+    target_all_name = '../data/target_all.csv'
+    test_name = '../data/test_'+str(n_to_last_record)+'.csv'
+    test_customer_ID_name = '../data/test_customer_ID'+str(n_to_last_record)+'.csv'
+    submit_name = '../data/submission.csv'
+    submit2_name = '../data/submission_2_options.csv'
+
     if run == 'prepare':
         train, target_all, junk_customer_ID = prepare_data('train', n_to_last_record, True)
-        pd.DataFrame(train).to_csv('../data/train_'+str(n_to_last_record)+'.csv',index=False,float_format="%.4f")
-        pd.DataFrame(target_all).to_csv('../data/target_all.csv',index=False,float_format="%.0f")
+        pd.DataFrame(train).to_csv(train_name,index=False,float_format="%.4f")
+        pd.DataFrame(target_all).to_csv(target_all_name,index=False,float_format="%.0f")
+        test, junk_target, test_customer_ID = prepare_data('test', 0, False)
+        pd.DataFrame(test).to_csv(test_name,index=False,float_format="%.4f")
+        pd.DataFrame(test_customer_ID).to_csv(test_customer_ID_name,index=False,float_format="%.0f")
     elif run == 'train':
-        train = pd.read_csv('../data/train_'+str(n_to_last_record)+'.csv')
-        target_all = pd.read_csv('../data/target_all.csv')
+        train = pd.read_csv(train_name)
+        target_all = pd.read_csv(target_all_name)
         train_cv(train.values, target_all.values)
     elif run == 'test':
-        test, junk_target, test_customer_ID = prepare_data('test', 0, False)
-        pd.DataFrame(test).to_csv('../data/test_'+str(n_to_last_record)+'.csv',index=False,float_format="%.4f")
-        pd.DataFrame(test_customer_ID).to_csv('../data/test_customer_ID'+str(n_to_last_record)+'.csv',index=False,float_format="%.0f")
-        train = pd.read_csv('../data/train_'+str(n_to_last_record)+'.csv')
-        target_all = pd.read_csv('../data/target_all.csv')
-        submit = train_predict(train.values, target_all.values, test, test_customer_ID)
-        submit.to_csv('../data/submission.csv',index=False)
+        train = pd.read_csv(train_name)
+        target_all = pd.read_csv(target_all_name)
+        test = pd.read_csv(test_name)
+        test_customer_ID = pd.read_csv(test_customer_ID_name)
+        submit = train_predict(train.values, target_all.values, test.values, test_customer_ID)
+        submit.to_csv(submit_name,index=False)
+    elif run == 'test2':
+        train = pd.read_csv(train_name)
+        target_all = pd.read_csv(target_all_name)
+        test = pd.read_csv(test_name)
+        test_customer_ID = pd.read_csv(test_customer_ID_name)
+        if target_all.shape[1] == NOPT:
+            # generate two-option combinations as targets
+            target_all = combine_2_options(target_all.values)
+            target_all.to_csv(target_all_name,index=False,float_format="%.0f")
+        submit2, pred_raw = train_predict_2_options(train.values, target_all.values, test.values, test_customer_ID)
+        submit2.to_csv(submit2_name,index=False)
+        for i, opt in enumerate(['A','B','C','D','E','F','G']):
+            pd.DataFrame(pred_raw[i]).to_csv('../data/pred_raw_option_'+opt+'.csv',index=False,float_format="%.0f")
     else:
         print("I don't know what to run...")
         sys.exit(2)
