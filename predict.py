@@ -187,6 +187,7 @@ def recode_features(df):
 def prepare_data(mode='train', n_to_last=3, gen_cpts=False):
 
     print("Entering prepare_data at {}".format(datetime.now()))
+    n_to_last_old = n_to_last
     if mode == 'train':
         input_data = pd.read_csv('../data/train.csv')
     elif mode == 'test':
@@ -241,7 +242,7 @@ def prepare_data(mode='train', n_to_last=3, gen_cpts=False):
             new_cust_flag = False
         if (r+1 < nrow and df.iat[r+1,pos_customer_ID] != curr_customer_ID) or r+1 == nrow:
             new_cust_flag = True
-            if n_to_last >= INF:
+            if n_to_last >= INF:   # for train only
                 nquotes = r - first_index
                 output_index = first_index - 1 + max(2, int(nquotes - max(0, np.random.normal(nquotes/2.9, 1.4, 1))))
             else:
@@ -273,7 +274,7 @@ def prepare_data(mode='train', n_to_last=3, gen_cpts=False):
     df_ind_col_plans_bought = pd.DataFrame(np.concatenate((df_ind_col.values,plans_bought),axis=1),\
             columns=keep_col+['t_A','t_B','t_C','t_D','t_E','t_F','t_G'])
 
-    cpt_dir_name = '../data/hashes_'+str(n_to_last)+'/'
+    cpt_dir_name = '../data/hashes_'+str(n_to_last_old)+'/'
     if gen_cpts:
         call(['mkdir','-p',cpt_dir_name])
         count = check_cond_prob_tables(cpt_dir_name)
@@ -400,10 +401,10 @@ def main():
     submit2_name = '../data/submission_2_options.csv'
 
     if run == 'prepare':
-        train, target_all, junk_customer_ID = prepare_data('train', n_to_last_record, True)
-        pd.DataFrame(train).to_csv(train_name,index=False,float_format="%.4f")
-        pd.DataFrame(target_all).to_csv(target_all_name,index=False,float_format="%.0f")
-        test, junk_target, test_customer_ID = prepare_data('test', 0, False)
+#        train, target_all, junk_customer_ID = prepare_data('train', n_to_last_record, True)
+#        pd.DataFrame(train).to_csv(train_name,index=False,float_format="%.4f")
+#        pd.DataFrame(target_all).to_csv(target_all_name,index=False,float_format="%.0f")
+        test, junk_target, test_customer_ID = prepare_data('test', n_to_last_record, False)
         pd.DataFrame(test).to_csv(test_name,index=False,float_format="%.4f")
         pd.DataFrame(test_customer_ID).to_csv(test_customer_ID_name,index=False,float_format="%.0f")
     elif run == 'train':
