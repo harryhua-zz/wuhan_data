@@ -334,7 +334,7 @@ def train_predict_2_options(train, target_all, test, test_customer_ID):
         print("target_all shape {} is not correct. {} expected.".format(target_all.shape,(len(test),NOPT+CUMSUM_NOPT[NOPT-1])))
         return None
 
-    cfr = RandomForestClassifier(n_estimators=50, criterion='entropy')
+    cfr = RandomForestClassifier(n_estimators=100, criterion='entropy')
     n_targets = target_all.shape[1]
     pred = np.empty((len(test),n_targets))
     pred_final = np.empty((len(test),NOPT))
@@ -343,8 +343,10 @@ def train_predict_2_options(train, target_all, test, test_customer_ID):
         pred[:,i] = cfr.fit(train,target).predict(test)
 
     decoded_2_pred = decode_2_options(pred[:,NOPT:])
+
     for i in range(NOPT):
-        decoded_2_pred[i] = np.concatenate((pred[:,i],decoded_2_pred[i]),axis=1)
+        print(i)
+        decoded_2_pred[i] = np.concatenate((pred[:,i].reshape((len(test),1)),decoded_2_pred[i]),axis=1)
         vals, counts = stats.mode(decoded_2_pred[i],axis=1)
         pred_final[:,i] = vals.astype(int)
 
