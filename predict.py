@@ -6,13 +6,16 @@ from datetime import datetime
 import os, sys, warnings
 import re
 from scipy import stats
+from subprocess import call
 
 warnings.simplefilter(action='ignore', category=DeprecationWarning)
 
 DEBUG=False
 
-NOPT=7
+NOPT = 7
 MAX_OBS = 10003 #942
+INF = 100
+
 CUMSUM_NOPT = np.cumsum(list(range(NOPT)))
 
 def decode_2_options(input_array):
@@ -173,6 +176,12 @@ def recode_features(df):
         location_hash = pd.Series(pd.qcut(location_count,4).labels, index=location_count.index)
         df['r_location'] = df['location'].apply(lambda x: location_hash.get(x))
 
+    # impute by mean for some features
+    df['car_value'] = df['car_value'].fillna(df['car_value'].mean().round().astype(int))
+    df['risk_factor'] = df['risk_factor'].fillna(df['risk_factor'].mean().round().astype(int))
+    df['C_previous'] = df['C_previous'].fillna(df['C_previous'].mean().round().astype(int))
+    df['duration_previous'] = df['duration_previous'].fillna(df['duration_previous'].mean().round().astype(int))
+
     return df
 
 def prepare_data(mode='train', n_to_last=3, gen_cpts=False):
@@ -207,7 +216,7 @@ def prepare_data(mode='train', n_to_last=3, gen_cpts=False):
     keep_index = []
 
     ma_size = 3
-    n_ma_slots = 3
+    n_ma_slots = 6
     ma_features = np.zeros((ncust,n_ma_slots*NOPT))
     cost_ma_features = np.zeros((ncust,n_ma_slots))
 
@@ -232,7 +241,11 @@ def prepare_data(mode='train', n_to_last=3, gen_cpts=False):
             new_cust_flag = False
         if (r+1 < nrow and df.iat[r+1,pos_customer_ID] != curr_customer_ID) or r+1 == nrow:
             new_cust_flag = True
-            output_index = r-n_to_last if r-n_to_last > first_index else first_index
+            if n_to_last >= INF:
+                nquotes = r - first_index
+                output_index = first_index - 1 + max(2, int(nquotes - max(0, np.random.normal(nquotes/2.9, 1.4, 1))))
+            else:
+                output_index = r-n_to_last if r-n_to_last > first_index else first_index
             keep_index.append(output_index)
             for i,p in enumerate(pos_A_G):
                 plans_bought[c,i] = df.iat[r,p]
@@ -260,21 +273,26 @@ def prepare_data(mode='train', n_to_last=3, gen_cpts=False):
     df_ind_col_plans_bought = pd.DataFrame(np.concatenate((df_ind_col.values,plans_bought),axis=1),\
             columns=keep_col+['t_A','t_B','t_C','t_D','t_E','t_F','t_G'])
 
+    cpt_dir_name = '../data/hashes_'+str(n_to_last)+'/'
     if gen_cpts:
-        cpts_out = create_cond_prob_tables(df_ind_col_plans_bought,\
-                [['t_A'],['t_B'],['t_C'],['t_D'],['t_E'],['t_F'],['t_G']],\
-                [['A'],['B'],['C'],['D'],['E'],['F'],['G'],['r_cost']])
-        count = check_cond_prob_tables('../data/')
+        call(['mkdir','-p',cpt_dir_name])
+        count = check_cond_prob_tables(cpt_dir_name)
         if count:
             print('Warning: {} conditional probability tables are found. '.format(count))
             print('         Newly generated cpts will not be written to disk.')
             print('         Remove them manually if you desire to write new cpts:')
             print('         rm ../data/*.p')
         else:
+            cpts_out = create_cond_prob_tables(df_ind_col_plans_bought,\
+                    [['t_A'],['t_B'],['t_C'],['t_D'],['t_E'],['t_F'],['t_G']],\
+                    [['A'],['B'],['C'],['D'],['E'],['F'],['G'],['r_cost'],\
+                    ['r_car_age'],['r_age_youngest'],['r_age_oldest'],['homeowner'],\
+                    ['C_previous'],['duration_previous'],['risk_factor'],['r_location'],\
+                    ['car_value'],['married_couple'],['r_hour']])
             for name, cpt in cpts_out.items():
-                cpt.to_pickle('../data/'+name+'.p')
+                cpt.to_pickle(cpt_dir_name+name+'.p')
 
-    cpts = read_cond_prob_tables('../data/')
+    cpts = read_cond_prob_tables(cpt_dir_name)
 
     static_features = create_static_features(df_ind_col_plans_bought,cpts,'^t_')
     print("CPTs and static features are created at {}".format(datetime.now()))
@@ -348,7 +366,7 @@ def train_predict_2_options(train, target_all, test, test_customer_ID):
         print(i)
         decoded_2_pred[i] = np.concatenate((pred[:,i].reshape((len(test),1)),decoded_2_pred[i]),axis=1)
         vals, counts = stats.mode(decoded_2_pred[i],axis=1)
-        pred_final[:,i] = vals.astype(int)
+        pred_final[:,i] = np.ravel(vals.astype(int))
 
     plans = np.apply_along_axis(plan_to_string,1,pred_final)
     test_customer_ID['plan'] = plans
@@ -369,7 +387,10 @@ def combine_2_options(target_all):
 def main():
 
     run = sys.argv[1]
-    n_to_last_record = int(sys.argv[2])
+    if sys.argv[2] in ['inf','random','rand','r']:
+        n_to_last_record = INF
+    else:
+        n_to_last_record = int(sys.argv[2])
 
     train_name = '../data/train_'+str(n_to_last_record)+'.csv'
     target_all_name = '../data/target_all.csv'
@@ -405,6 +426,7 @@ def main():
             # generate two-option combinations as targets
             target_all = combine_2_options(target_all.values)
             target_all.to_csv(target_all_name,index=False,float_format="%.0f")
+
         submit2, pred_raw = train_predict_2_options(train.values, target_all.values, test.values, test_customer_ID)
         submit2.to_csv(submit2_name,index=False)
         for i, opt in enumerate(['A','B','C','D','E','F','G']):
