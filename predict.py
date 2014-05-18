@@ -401,9 +401,9 @@ def main():
     submit2_name = '../data/submission_2_options.csv'
 
     if run == 'prepare':
-#        train, target_all, junk_customer_ID = prepare_data('train', n_to_last_record, True)
-#        pd.DataFrame(train).to_csv(train_name,index=False,float_format="%.4f")
-#        pd.DataFrame(target_all).to_csv(target_all_name,index=False,float_format="%.0f")
+        train, target_all, junk_customer_ID = prepare_data('train', n_to_last_record, True)
+        pd.DataFrame(train).to_csv(train_name,index=False,float_format="%.4f")
+        pd.DataFrame(target_all).to_csv(target_all_name,index=False,float_format="%.0f")
         test, junk_target, test_customer_ID = prepare_data('test', n_to_last_record, False)
         pd.DataFrame(test).to_csv(test_name,index=False,float_format="%.4f")
         pd.DataFrame(test_customer_ID).to_csv(test_customer_ID_name,index=False,float_format="%.0f")
